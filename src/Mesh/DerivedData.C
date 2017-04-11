@@ -19,6 +19,7 @@
 
 #include "Exception.h"                  // for Assert
 #include "DerivedData.h"
+#include "ContainerUtil.h"
 
 namespace tk {
 
@@ -462,11 +463,8 @@ genEsupel( const std::vector< std::size_t >& inpoel,
   auto& esup1 = esup.first;
   auto& esup2 = esup.second;
 
-  // linked lists storing elements surrounding points of elements, put in a
-  // single zero in both
-  std::vector< std::size_t > esupel2( 1, 0 ), esupel1( 1, 0 );
-
-  std::size_t e = 0;
+  // determine size of esupel[12]
+  std::size_t e = 0, e1 = 1, e2 = 1;
   std::set< std::size_t > esuel;
   for (auto p : inpoel) {       // loop over all points of all elements
     // collect unique element ids of elements surrounding points of element
@@ -474,11 +472,32 @@ genEsupel( const std::vector< std::size_t >& inpoel,
     if (++e%nnpe == 0) {        // when finished checking all nodes of element
       // erase element whose surrounding elements are considered
       esuel.erase( e/nnpe-1 );
+      // compute size of esupel1
+      e1 += esuel.size();
+      // compute size of esupel2
+      ++e2;
+      tk::destroy( esuel );
+    }
+  }
+
+  // linked lists storing elements surrounding points of elements, put in a
+  // single zero in both
+  std::vector< std::size_t > esupel2( e2, 0 ), esupel1( e1, 0 );
+
+  // fill linked lists
+  e = 0; e1 = 1; e2 = 1;
+  for (auto p : inpoel) {       // loop over all points of all elements
+    // collect unique element ids of elements surrounding points of element
+    for (auto i=esup2[p]+1; i<=esup2[p+1]; ++i) esuel.insert( esup1[i] );
+    if (++e%nnpe == 0) {        // when finished checking all nodes of element
+      // erase element whose surrounding elements are considered
+      esuel.erase( e/nnpe-1 );
       // store unique element ids in esupel1
-      for (auto i : esuel) esupel1.push_back( i );
+      for (auto i : esuel) esupel1[ e1++ ] = i;
       // store end-index for element used to address into esupel1
-      esupel2.push_back( esupel2.back() + esuel.size() );
-      esuel.clear();
+      esupel2[ e2 ] = esupel2[ e2-1 ] + esuel.size();
+      ++e2;
+      tk::destroy( esuel );
     }
   }
 
