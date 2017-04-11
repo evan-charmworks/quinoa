@@ -37,19 +37,24 @@ class Tracker {
 
   public:
     //! Constructor
-    //! \param[in] npar Number of particles per mesh element
-    //! \param[in] inpoel Mesh element connectivity
     //! \param[in] feedback Whether to send sub-task feedback to host
+    //! \param[in] npar Number of particles per mesh element
+    //! \param[in] nel Number of mesh elements with particles
+    //! \param[in] esupel Linked lists storing elements surrounding points of
+    //!   elements
     //! \author J. Bakosi
-    explicit Tracker( bool feedback = false,
-                      std::size_t npar = 0,
-                      const std::vector< std::size_t >& inpoel = {} ) :
-      m_particles( npar * inpoel.size()/4, 3 ), // only the 3 spatial components
+    explicit
+    Tracker( bool feedback = false,
+             std::size_t npar = 0,
+             std::size_t nel = 0,
+             const std::pair< std::vector< std::size_t >,
+                              std::vector< std::size_t > >& esupel = {} ) :
+      m_particles( npar * nel, 3 ), // only the 3 spatial components
       m_elp( m_particles.nunk() ),
       m_parmiss(),
       m_parelse(),
       m_nchpar( 0 ),
-      m_esupel( tk::genEsupel( inpoel, 4, tk::genEsup(inpoel,4) ) ),
+      m_esupel( esupel ),
       m_feedback( feedback )
     {}
 

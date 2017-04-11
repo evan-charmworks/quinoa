@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Carrier.C
   \author    J. Bakosi
-  \date      Thu 23 Mar 2017 07:09:41 AM MDT
+  \date      Tue 11 Apr 2017 04:09:40 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Carrier advances a system of transport equations
   \details   Carrier advances a system of transport equations. There are a
@@ -91,7 +91,8 @@ Carrier::Carrier( const TransporterProxy& transporter,
   m_edgenodes( edgenodes ),
   m_el( tk::global2local( conn ) ),     // fills m_inpoel, m_gid, m_lid
   m_fluxcorrector( m_inpoel.size() ),
-  m_psup( tk::genPsup( m_inpoel, 4, tk::genEsup(m_inpoel,4) ) ),
+  m_esup( tk::genEsup( m_inpoel, 4 ) ),
+  m_psup( tk::genPsup( m_inpoel, 4, m_esup ) ),
   m_u( m_gid.size(), g_inputdeck.get< tag::component >().nprop() ),
   m_ul( m_gid.size(), g_inputdeck.get< tag::component >().nprop() ),
   m_uf( m_gid.size(), g_inputdeck.get< tag::component >().nprop() ),
@@ -107,8 +108,11 @@ Carrier::Carrier( const TransporterProxy& transporter,
   m_bid(),
   m_pc(),
   m_qc(),
-  m_ac(),                                               // 0 = no particles
-  m_tracker( g_inputdeck.get< tag::cmd, tag::feedback >(), 0, m_inpoel )
+  m_ac(),
+  m_tracker( g_inputdeck.get< tag::cmd, tag::feedback >(),
+             0, // 0 = no particles
+             m_inpoel.size()/4,
+             tk::genEsupel( m_inpoel, 4, m_esup ) )
 // *****************************************************************************
 //  Constructor
 //! \param[in] transporter Host (Transporter) proxy
@@ -127,6 +131,10 @@ Carrier::Carrier( const TransporterProxy& transporter,
 //! \author J. Bakosi
 // *****************************************************************************
 {
+  // Free memory used to store linked lists storing elements surrounding points
+  // as was only needed temporarily in the above constructor initializer list.
+  tk::destroy( m_esup );
+
   Assert( m_psup.second.size()-1 == m_gid.size(),
           "Number of mesh points and number of global IDs unequal" );
 

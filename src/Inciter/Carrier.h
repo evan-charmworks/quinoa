@@ -2,7 +2,7 @@
 /*!
   \file      src/Inciter/Carrier.h
   \author    J. Bakosi
-  \date      Fri 17 Mar 2017 11:29:15 AM MDT
+  \date      Tue 11 Apr 2017 04:04:42 PM MDT
   \copyright 2012-2015, Jozsef Bakosi, 2016, Los Alamos National Security, LLC.
   \brief     Carrier advances a system of transport equations
   \details   Carrier advances a system of transport equations. There are a
@@ -281,6 +281,7 @@ class Carrier : public CBase_Carrier {
         m_lid = std::get< 2 >( m_el );
       }
       p | m_coord;
+      p | m_esup;
       p | m_psup;
       p | m_u;
       p | m_ul;
@@ -373,6 +374,8 @@ class Carrier : public CBase_Carrier {
     std::array< std::vector< tk::real >, 3 > m_coord;
     //! Flux corrector performing FCT
     FluxCorrector m_fluxcorrector;
+    //! Linked lists storing elements surrounding points
+    std::pair< std::vector< std::size_t >, std::vector< std::size_t > > m_esup;
     //! Points surrounding points of our chunk of the mesh
     std::pair< std::vector< std::size_t >, std::vector< std::size_t > > m_psup;
     //! Unknown/solution vectors: global mesh point row ids and values
