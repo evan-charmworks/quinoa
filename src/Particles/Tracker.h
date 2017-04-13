@@ -47,14 +47,14 @@ class Tracker {
     Tracker( bool feedback = false,
              std::size_t npar = 0,
              std::size_t nel = 0,
-             const std::pair< std::vector< std::size_t >,
-                              std::vector< std::size_t > >& esupel = {} ) :
+             std::pair< std::vector< std::size_t >,
+                        std::vector< std::size_t > >&& esupel = {} ) :
       m_particles( npar * nel, 3 ), // only the 3 spatial components
       m_elp( m_particles.nunk() ),
       m_parmiss(),
       m_parelse(),
       m_nchpar( 0 ),
-      m_esupel( esupel ),
+      m_esupel( std::move(esupel) ),
       m_feedback( feedback )
     {}
 
