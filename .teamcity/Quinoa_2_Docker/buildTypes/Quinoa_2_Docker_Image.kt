@@ -4,6 +4,9 @@ import jetbrains.buildServer.configs.kotlin.v10.*
 import jetbrains.buildServer.configs.kotlin.v10.buildSteps.ScriptBuildStep
 import jetbrains.buildServer.configs.kotlin.v10.buildSteps.ScriptBuildStep.*
 import jetbrains.buildServer.configs.kotlin.v10.buildSteps.script
+import jetbrains.buildServer.configs.kotlin.v10.triggers.VcsTrigger
+import jetbrains.buildServer.configs.kotlin.v10.triggers.VcsTrigger.*
+import jetbrains.buildServer.configs.kotlin.v10.triggers.vcs
 
 object Quinoa_2_Docker_Image : Template({
     uuid = "e6b8a4ab-5cd9-469e-a60a-03419b103842"
@@ -25,7 +28,7 @@ object Quinoa_2_Docker_Image : Template({
             name = "Build image"
             id = "RUNNER_24"
             workingDir = "%workdir%"
-            scriptContent = "docker build --build-arg http_proxy=http://proxyout.lanl.gov:8080/ --build-arg https_proxy=https://proxyout.lanl.gov:8080/ --no-cache=true --rm=true -t %organization%/%repository%-build:%tag% -f %dockerfile% ."
+            scriptContent = "docker build --build-arg http_proxy=http://proxyout.lanl.gov:8080/ --build-arg https_proxy=https://proxyout.lanl.gov:8080/ --build-arg COMMIT=%build.vcs.number% --no-cache=true --rm=true -t %organization%/%repository%-build:%tag% -f %dockerfile% ."
         }
         script {
             name = "Squash image"
@@ -44,5 +47,19 @@ object Quinoa_2_Docker_Image : Template({
     requirements {
         equals("teamcity.agent.jvm.os.name", "Linux", "RQ_23")
         contains("teamcity.agent.name", "lagrange", "RQ_24")
+    }
+
+    triggers {
+        vcs {
+            id = "vcsTrigger"
+            triggerRules = """
+                +:.
+                -:comment=\[ci skip\]:**
+                -:comment=\[skip ci\]:**
+            """.trimIndent()
+            branchFilter = "+:<default>"
+            perCheckinTriggering = true
+            groupCheckinsByCommitter = true
+        }
     }
 })
