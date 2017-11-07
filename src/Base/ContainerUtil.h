@@ -13,6 +13,7 @@
 #include <map>
 #include <algorithm>
 #include <iterator>
+#include <iostream>
 
 #include "Exception.h"
 
@@ -46,7 +47,13 @@ auto cref_find( const Container& map, const typename Container::key_type& key )
 // *****************************************************************************
 {
   const auto it = map.find( key );
-  if (it != end(map)) return it->second; else Throw( "Can't find key" );
+  if (it != end(map)) {
+      return it->second;
+  }
+  else {
+      std::cout << key << std::endl;
+      Throw( "Can't find key" );
+  }
 }
 
 template< typename Container >

@@ -263,8 +263,10 @@ class Partitioner : public CBase_Partitioner {
     //!   linear system contributions) as map-values to edges given by two old
     //!   node IDs (as in file) as map-keys
     tk::UnsMesh::EdgeNodes m_linedges;
+
     //! Global mesh element connectivity associated to chares owned
     std::unordered_map< int, std::vector< std::size_t > > m_chinpoel;
+
     //! \brief Maps associating old node IDs to new node IDs (as in producing
     //!   contiguous-row-id linear system contributions) categorized by chares.
     //! \details Maps associating old node IDs (as in file) as map-values to new

@@ -935,7 +935,7 @@ Partitioner::refine()
              const auto BC = tk::cref_find( edgenodes, {{ B,C }} );
              const auto BD = tk::cref_find( edgenodes, {{ B,D }} );
              const auto CD = tk::cref_find( edgenodes, {{ C,D }} );
-             */
+          */
 
           // TODO: We should likely check the return values here
           const int AB = mesh_adapter->node_connectivity.find(A, B);
@@ -1036,63 +1036,6 @@ Partitioner::reordered()
       }
     }
     m_chinpoel = std::move( refinpoel );
-
-    // TODO: this can be removed once AMR is enabled
-    // Build AMR object from current state:
-    //
-    // TODO: Make unique?
-    AMR::mesh_adapter_t* mesh_adapter = new AMR::mesh_adapter_t();
-
-    // TODO: Check the size of this right
-    mesh_adapter->init(m_tetinpoel, m_tetinpoel.size() );
-
-    auto* er = new tk::ExodusIIMeshReader( g_inputdeck.get< tag::cmd, tag::io, tag::input >() );
-
-    auto gid = m_tetinpoel;
-    tk::unique( gid );
-    auto ext = tk::extents( gid );
-
-    auto file_coord = er->readNodes( ext );
-
-    //computeCentroids( er );
-
-    auto& x = std::get< 0 >( file_coord );
-    auto& y = std::get< 1 >( file_coord );
-    auto& z = std::get< 2 >( file_coord );
-    size_t graph_size = x.size();
-
-    // TODO: Check if these copy in or take a pointer
-    mesh_adapter->init_node_store(
-            &x,
-            &y,
-            &z,
-            graph_size
-    );
-
-    // Categorize by coord
-		// Loop over the inpoel categorized by char
-		for (const auto &c : m_chinpoel)
-		{
-
-				// c.second is the connectivity needed by that char
-				auto connectivity = c.second;
-
-				// connectivity is (now) a unique list of those
-				tk::unique(connectivity);
-
-				// For each node, add the coordinate data to the store
-				for (auto id : connectivity)
-				{
-						// global id => {x,y,z}
-            const auto& coord = mesh_adapter->node_store.get(id);
-
-						// global id
-						// TODO: make this a single call of {1,2,3}
-						m_chcoords[c.first][id][0] = coord[0];
-						m_chcoords[c.first][id][1] = coord[1];
-						m_chcoords[c.first][id][2] = coord[2];
-				}
-		}
 
     // Update chare-categorized mesh nodes surrounding our mesh chunk with
     // the reordered node IDs
@@ -1257,6 +1200,68 @@ Partitioner::createDiscWorkers()
 //!   operate on.
 // *****************************************************************************
 {
+
+    // TODO: this can be removed once AMR is enabled
+    // Build AMR object from current state:
+    //
+    // TODO: Right now we have two mesh objects (one other in refine). Not a good idea.
+    // TODO: Make unique instead of new?
+    AMR::mesh_adapter_t* mesh_adapter = new AMR::mesh_adapter_t();
+
+    // TODO: Check the size of this right
+    mesh_adapter->init(m_tetinpoel, m_tetinpoel.size() );
+
+    auto* er = new tk::ExodusIIMeshReader( g_inputdeck.get< tag::cmd, tag::io, tag::input >() );
+
+    auto gid = m_tetinpoel;
+    tk::unique( gid );
+    auto ext = tk::extents( gid );
+
+    auto file_coord = er->readNodes( ext );
+
+    auto& x = std::get< 0 >( file_coord );
+    auto& y = std::get< 1 >( file_coord );
+    auto& z = std::get< 2 >( file_coord );
+
+    size_t graph_size = x.size();
+
+    // TODO: Check if these copy in or take a pointer
+    mesh_adapter->init_node_store(
+            &x,
+            &y,
+            &z,
+            graph_size
+    );
+
+    // Categorize by coord
+		// Loop over the inpoel categorized by char
+		for (const auto &c : m_chinpoel)
+		{
+
+				// c.second is the connectivity needed by that char
+				auto connectivity = c.second;
+
+				// connectivity is (now) a unique list of those
+				tk::unique(connectivity);
+
+				// For each node, add the coordinate data to the store
+				for (auto id : connectivity)
+				{
+						// global id => {x,y,z}
+            // TODO: This id is out of the range of the small node store (which uses local ids)
+            // TODO: Figure out what is global id and what is not
+            const auto& coord = mesh_adapter->node_store.get(id);
+
+            std::cout << "Adding " << c.first << " at " << id << std::endl;
+
+						// global id
+						// TODO: make this a single call of {1,2,3}
+						m_chcoords[c.first][id][0] = coord[0];
+						m_chcoords[c.first][id][1] = coord[1];
+						m_chcoords[c.first][id][2] = coord[2];
+
+				}
+		}
   auto dist = chareDistribution();
 
   for (int c=0; c<dist[1]; ++c) {
