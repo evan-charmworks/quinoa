@@ -1002,6 +1002,9 @@ Partitioner::reordered()
     // Update chare-categorized element connectivities with new nodes and
     // newly added edge-nodes during initial unifor mesh refinement
     decltype(m_chinpoel) refinpoel;
+
+
+    // TODO: This will be replacd by the AMR lib
     for (const auto& chi : m_chinpoel) {
       auto& ri = refinpoel[ chi.first ];
       const auto& edgenodes = tk::cref_find( m_chedgenodes, chi.first );
@@ -1033,6 +1036,63 @@ Partitioner::reordered()
       }
     }
     m_chinpoel = std::move( refinpoel );
+
+    // TODO: this can be removed once AMR is enabled
+    // Build AMR object from current state:
+    //
+    // TODO: Make unique?
+    AMR::mesh_adapter_t* mesh_adapter = new AMR::mesh_adapter_t();
+
+    // TODO: Check the size of this right
+    mesh_adapter->init(m_tetinpoel, m_tetinpoel.size() );
+
+    auto* er = new tk::ExodusIIMeshReader( g_inputdeck.get< tag::cmd, tag::io, tag::input >() );
+
+    auto gid = m_tetinpoel;
+    tk::unique( gid );
+    auto ext = tk::extents( gid );
+
+    auto file_coord = er->readNodes( ext );
+
+    //computeCentroids( er );
+
+    auto& x = std::get< 0 >( file_coord );
+    auto& y = std::get< 1 >( file_coord );
+    auto& z = std::get< 2 >( file_coord );
+    size_t graph_size = x.size();
+
+    // TODO: Check if these copy in or take a pointer
+    mesh_adapter->init_node_store(
+            &x,
+            &y,
+            &z,
+            graph_size
+    );
+
+    // Categorize by coord
+		// Loop over the inpoel categorized by char
+		for (const auto &c : m_chinpoel)
+		{
+
+				// c.second is the connectivity needed by that char
+				auto gid = c.second;
+
+				// gid is (now) a unique list of those
+				tk::unique(gid);
+
+				// For each node, add the coordinate data to the store
+				for (auto id : gid)
+				{
+						// global id => {x,y,z}
+            const auto& coord = mesh_adapter->node_store.get(id);
+
+						// global id
+						// TODO: make this a single call of {1,2,3}
+						m_chcoords[c.first][id][0] = coord[0];
+						m_chcoords[c.first][id][1] = coord[1];
+						m_chcoords[c.first][id][2] = coord[2];
+				}
+		}
 
     // Update chare-categorized mesh nodes surrounding our mesh chunk with
     // the reordered node IDs
@@ -1208,9 +1268,17 @@ Partitioner::createDiscWorkers()
     typename decltype(m_chedgenodes)::mapped_type edno;
     if (!m_chedgenodes.empty()) edno = tk::cref_find( m_chedgenodes, cid );
     // Create worker array element
-    m_scheme.discInsert< tag::elem >( cid, m_host,
-      tk::cref_find(m_chinpoel,cid), msum,
-      tk::cref_find(m_chfilenodes,cid), edno, m_nchare, CkMyPe() );
+    m_scheme.discInsert< tag::elem >(
+            cid,
+            m_host,
+            tk::cref_find(m_chinpoel,cid),
+            msum,
+            tk::cref_find(m_chfilenodes,cid),
+            edno,
+            m_nchare,
+            tk::cref_find(m_chcoords,cid),
+            CkMyPe()
+            );
     m_scheme.doneDiscInserting< tag::elem >( cid );
   }
 

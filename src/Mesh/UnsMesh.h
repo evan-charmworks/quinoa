@@ -25,7 +25,16 @@ namespace tk {
 class UnsMesh {
 
   public:
+
     using Coords = std::array< std::vector< real >, 3 >;
+
+    using coord_map_t =
+		std::unordered_map< int,  // Chare id
+      std::unordered_map<
+          std::size_t, // global_id
+          std::array< double, 3> // coords
+      >
+    >;
 
     //! Edge: IDs of two end-points
     using Edge = std::array< std::size_t, 2 >;

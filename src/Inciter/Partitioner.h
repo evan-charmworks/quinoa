@@ -317,6 +317,8 @@ class Partitioner : public CBase_Partitioner {
     std::unordered_map< int,
       std::unordered_map< int, tk::UnsMesh::Edges > > m_msumed;
 
+    tk::UnsMesh::coord_map_t m_chcoords;
+
     //! Read our contiguously-numbered chunk of the mesh graph from file
     void readGraph( tk::ExodusIIMeshReader& er );
 

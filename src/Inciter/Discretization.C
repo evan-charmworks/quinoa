@@ -38,7 +38,9 @@ Discretization::Discretization(
   const std::unordered_map< int, std::unordered_set< std::size_t > >& msum,
   const std::unordered_map< std::size_t, std::size_t >& filenodes,
   const tk::UnsMesh::EdgeNodes& edgenodes,
-  int nchare ) :
+  int nchare,
+  const tk::UnsMesh::coord_map_t::mapped_type& coords
+  ) :
   m_it( 0 ),
   m_t( g_inputdeck.get< tag::discr, tag::t0 >() ),
   m_dt( g_inputdeck.get< tag::discr, tag::dt >() ),
@@ -105,6 +107,29 @@ Discretization::Discretization(
 
   // Allocate receive buffer for nodal volumes
   m_volc.resize( m_bid.size(), 0.0 );
+
+  // TODO: Put this in a function?
+  auto& x = m_coord[0];
+  auto& y = m_coord[1];
+  auto& z = m_coord[2];
+
+  auto nn = m_lid.size();
+  x.resize( nn );
+  y.resize( nn );
+  z.resize( nn );
+
+  for (auto global_id : m_gid)
+  {
+      // n is the ref to {x,y,z}
+      const auto& this_coord = tk::cref_find( coords, global_id);
+      auto local_id = tk::cref_find(m_lid, global_id);
+
+      x[local_id] = this_coord[0];
+      y[local_id] = this_coord[1];
+      z[local_id] = this_coord[2];
+
+  }
+
 }
 
 void
@@ -122,6 +147,7 @@ Discretization::registerReducers()
   PDFMerger = CkReduction::addReducer( tk::mergeUniPDFs );
 }
 
+// TODO: This no longer represents coords, perhaps vol?
 void
 Discretization::coord()
 // *****************************************************************************
@@ -130,9 +156,10 @@ Discretization::coord()
 // *****************************************************************************
 {
   // Read coordinates of nodes of the mesh chunk we operate on
-  readCoords();
+  //readCoords(); // Can now do in constructor
   // Add coordinates of mesh nodes newly generated to edge-mid points during
   // initial refinement
+  // TODO: Is this still valid for AMR tests given the changes we've made?
   addEdgeNodeCoords();
   // Compute mesh cell volumes
   vol();
