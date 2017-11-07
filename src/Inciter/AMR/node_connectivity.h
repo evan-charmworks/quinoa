@@ -2,7 +2,6 @@
 #define AMR_node_connectivity_h
 
 #include <vector>
-#include "Base/Exception.h"
 
 namespace AMR {
 
@@ -23,7 +22,7 @@ namespace AMR {
             /**
              * @brief Method to add initial nodes to the store
              *
-             * @param initial_size Size of the list to fill to
+             * @param initial_size
              */
             void fill_initial_nodes(size_t initial_size)
             {
@@ -83,32 +82,24 @@ namespace AMR {
             {
                 // TODO: make this actually inspect the face_list and be much
                 // more robust...
-                // TODO: Remove this hack to supress warning
-                size_t result = face_list[0][0];
                 switch(opposite_index)
                 {
                     case 0:  // ABC
-                        result = 3;
-                        break;
+                        return 3;
                     case 1:  // ABD
-                        result = 2;
-                        break;
+                        return 2;
                     case 2:  // ACD
-                        result = 1;
-                        break;
+                        return 1;
                     case 3:  // BCD
-                        result = 0;
-                        break;
+                        return 0;
                     default: // something went horribly wrong..
-                        Assert(0, "Invalid Opposite Index");
-                        break;
+                        assert(0);
+                        return 0;
                 }
-
-                return result;
             }
 
             // TODO: Document this
-            // Int because it's signed.. is this a good idea?
+            // Int becasue it's signed..
             int find(size_t A, size_t B)
             {
                 size_t min = std::min(A,B);
@@ -120,7 +111,7 @@ namespace AMR {
                     node_pair_t n = get(i);
                     if (min == n[0] && max == n[1])
                     {
-                        return static_cast<int>(i);
+                        return i;
                     }
                 }
                 return -1;
@@ -131,18 +122,20 @@ namespace AMR {
             {
                 if (A != 0 || B != 0)
                 {
-                    Assert(A != B, "Trying to add node with duplicated ID");
+                    assert(A != B);
                     // TODO: Abstract to exists method. (Could have one for id,
                     // as well as one for val)
 
                     // check if already exists
                     int f = find(A,B);
                     if (f != -1) {
-                        return static_cast<size_t>(f);
+                        std::cout << "Connect already exits " << A << " " << B << std::endl;
+                        return f;
                     }
                 }
 
                 nodes.push_back( {{std::min(A,B), std::max(A,B)}} );
+                std::cout << " add " << size()-1 << " a = " <<  A << " b = " << B << std::endl;
                 return size()-1;
             }
 
@@ -152,7 +145,7 @@ namespace AMR {
             void print()
             {
                 std::cout << "Connectivity" << std::endl;
-                for (size_t i = 0; i < size(); i ++)
+                for (int i = 0; i < size(); i ++)
                 {
                     std::cout << i << ": A " << get(i)[0] << " B " << get(i)[1] << std::endl;
                 }

@@ -7,7 +7,6 @@
 class edge_t {
     using edge_ = std::pair<size_t, size_t>;
     private:
-        // TODO: Should data members be m_<blah>
         edge_ data;
         friend std::ostream& operator<<(std::ostream&, const edge_t&);
 
@@ -21,10 +20,15 @@ class edge_t {
         edge_t()
         {
         }
-
         edge_t(size_t A, size_t B)
         {
             data = std::make_pair(std::min(A,B), std::max(A,B));
+        }
+
+        // Copy constructor
+        edge_t(const edge_t &e)
+        {
+            data = e.data;
         }
 
         // Operators

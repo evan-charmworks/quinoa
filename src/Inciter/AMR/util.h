@@ -5,7 +5,8 @@
 #include <vector>
 #include <sstream>
 
-#include "AMR_types.h"
+#include "Loggers.h"
+#include "types.h"
 
 namespace AMR {
     namespace util {
@@ -13,8 +14,8 @@ namespace AMR {
         // Prototypes
         void split(const std::string &s, char delim, std::vector<std::string> &elems);
         std::vector<std::string> split(const std::string &s, char delim);
-        coordinate_t find_mid_point(coordinate_t edge_node_A, coordinate_t edge_node_B);
-        coordinate_t find_mid_point(real_t x1, real_t y1, real_t z1, real_t x2, real_t y2, real_t z2);
+        coord_t find_mid_point(coord_t edge_node_A, coord_t edge_node_B);
+        coord_t find_mid_point(real_t x1, real_t y1, real_t z1, real_t x2, real_t y2, real_t z2);
 
     }
 }

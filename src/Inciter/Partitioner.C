@@ -1075,13 +1075,13 @@ Partitioner::reordered()
 		{
 
 				// c.second is the connectivity needed by that char
-				auto gid = c.second;
+				auto connectivity = c.second;
 
-				// gid is (now) a unique list of those
-				tk::unique(gid);
+				// connectivity is (now) a unique list of those
+				tk::unique(connectivity);
 
 				// For each node, add the coordinate data to the store
-				for (auto id : gid)
+				for (auto id : connectivity)
 				{
 						// global id => {x,y,z}
             const auto& coord = mesh_adapter->node_store.get(id);
