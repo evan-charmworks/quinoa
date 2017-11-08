@@ -93,7 +93,7 @@ namespace AMR {
             {
 								for (size_t i = 0; i < size(); i++)
 								{
-										trace_out << "Node " << i << " has coords :" <<
+                    std::cout << "Node " << i << " has coords :" <<
 												x(i) << ", " <<
 												y(i) << ", " <<
 												z(i) << ", " <<
@@ -230,7 +230,7 @@ namespace AMR {
             // Alias for id_to_coordinate
             coord_t get(size_t id)
             {
-                id_to_coordinate(id);
+                return id_to_coordinate(id);
             }
 
     }; // end class
