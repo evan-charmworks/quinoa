@@ -1234,57 +1234,57 @@ Partitioner::createDiscWorkers()
     );
 
     // Categorize by coord
-		// Loop over the inpoel categorized by char
-		for (const auto &c : m_chinpoel)
-		{
+    // Loop over the inpoel categorized by char
+    for (const auto &c : m_chinpoel)
+    {
 
-				// c.second is the connectivity needed by that char
-				auto connectivity = c.second;
+        // c.second is the connectivity needed by that char
+        auto connectivity = c.second;
 
-				// connectivity is (now) a unique list of those
-				tk::unique(connectivity);
+        // connectivity is (now) a unique list of those
+        tk::unique(connectivity);
 
-				// For each node, add the coordinate data to the store
-				for (auto id : connectivity)
-				{
-						// global id => {x,y,z}
+        // For each node, add the coordinate data to the store
+        for (auto id : connectivity)
+        {
+            // global id => {x,y,z}
             // TODO: This id is out of the range of the small node store (which uses local ids)
             // TODO: Figure out what is global id and what is not
             const auto& coord = mesh_adapter->node_store.get(id);
 
-            std::cout << "Adding " << c.first << " at " << id << std::endl;
+            // global id
+            // TODO: make this a single call of {1,2,3}
+            m_chcoords[c.first][id][0] = coord[0];
+            m_chcoords[c.first][id][1] = coord[1];
+            m_chcoords[c.first][id][2] = coord[2];
 
-						// global id
-						// TODO: make this a single call of {1,2,3}
-						m_chcoords[c.first][id][0] = coord[0];
-						m_chcoords[c.first][id][1] = coord[1];
-						m_chcoords[c.first][id][2] = coord[2];
+        }
+    }
+    auto dist = chareDistribution();
 
-				}
-		}
-  auto dist = chareDistribution();
+    for (int c=0; c<dist[1]; ++c) {
+        // Compute chare ID
+        auto cid = CkMyPe() * dist[0] + c;
+        // Guard those searches that operate on empty containers in serial
+        typename decltype(m_msum)::mapped_type msum;
+        if (!m_msum.empty()) msum = tk::cref_find( m_msum, cid );
+        typename decltype(m_chedgenodes)::mapped_type edno;
+        if (!m_chedgenodes.empty()) edno = tk::cref_find( m_chedgenodes, cid );
 
-  for (int c=0; c<dist[1]; ++c) {
-    // Compute chare ID
-    auto cid = CkMyPe() * dist[0] + c;
-    // Guard those searches that operate on empty containers in serial
-    typename decltype(m_msum)::mapped_type msum;
-    if (!m_msum.empty()) msum = tk::cref_find( m_msum, cid );
-    typename decltype(m_chedgenodes)::mapped_type edno;
-    if (!m_chedgenodes.empty()) edno = tk::cref_find( m_chedgenodes, cid );
-    // Create worker array element
-    m_scheme.discInsert< tag::elem >(
-            cid,
-            m_host,
-            tk::cref_find(m_chinpoel,cid),
-            msum,
-            tk::cref_find(m_chfilenodes,cid),
-            edno,
-            m_nchare,
-            tk::cref_find(m_chcoords,cid),
-            CkMyPe()
-            );
-    m_scheme.doneDiscInserting< tag::elem >( cid );
+        // Create worker array element
+        m_scheme.discInsert< tag::elem >(
+                cid,
+                m_host,
+                tk::cref_find(m_chinpoel,cid),
+                msum,
+                tk::cref_find(m_chfilenodes,cid),
+                edno,
+                m_nchare,
+                tk::cref_find(m_chcoords,cid),
+                CkMyPe()
+        );
+
+        m_scheme.doneDiscInserting< tag::elem >( cid );
   }
 
   // Free storage for unique global mesh nodes chares on our PE will
