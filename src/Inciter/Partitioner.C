@@ -16,7 +16,8 @@
 // *****************************************************************************
 
 #include "Partitioner.h"
-
+#include "../Mesh/Reorder.h" // TODO: Remove this
+ 
 namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;
@@ -1217,6 +1218,7 @@ Partitioner::createDiscWorkers()
     tk::unique( gid );
     auto ext = tk::extents( gid );
 
+    // TODO: Is it a good idea to init it to the full file?
     auto file_coord = er->readNodes( ext );
 
     auto& x = std::get< 0 >( file_coord );
@@ -1225,7 +1227,29 @@ Partitioner::createDiscWorkers()
 
     size_t graph_size = x.size();
 
-    // TODO: Check if these copy in or take a pointer
+  std::cout << "Read: " << std::endl;
+  for (int i = 0; i < x.size(); i++) {
+      std::cout <<
+          "PE " << CkMyPe() <<
+          " i " << i <<
+          " x " << x[i] <<
+          " y " << y[i] <<
+          " z " << z[i] <<
+          std::endl;
+  }
+
+    /*
+    std::cout << "Disc" << std::endl;
+    for (int i = 0; i < x.size(); i++)
+    {
+        std::cout <<
+            " x " << x[i] <<
+            " y " << y[i] <<
+            " z " << z[i] <<
+            std::endl;
+    }
+    */
+
     mesh_adapter->init_node_store(
             &x,
             &y,
@@ -1234,81 +1258,135 @@ Partitioner::createDiscWorkers()
     );
 
     // Categorize by coord
-		// Loop over the inpoel categorized by char
-		for (const auto &c : m_chinpoel)
-		{
+    // Loop over the inpoel categorized by char
+    for (const auto &c : m_chinpoel)
+    {
 
-				// c.second is the connectivity needed by that char
-				auto connectivity = c.second;
+        // c.second is the connectivity needed by that char
+        auto connectivity = c.second;
 
-				// connectivity is (now) a unique list of those
-				tk::unique(connectivity);
+        // connectivity is (now) a unique list of those
+        tk::unique(connectivity);
 
-				// For each node, add the coordinate data to the store
-				for (auto id : connectivity)
-				{
-						// global id => {x,y,z}
+        // TODO: delete
+            int cid = c.first;
+            // TODO: Delete this stuff below here
+            auto conn = tk::cref_find(m_chinpoel,cid);
+            std::tuple< std::vector< std::size_t >,
+                std::vector< std::size_t >,
+                std::unordered_map< std::size_t, std::size_t > > m_el;
+            m_el = tk::global2local( conn );
+            std::unordered_map< std::size_t, std::size_t > m_lid = std::get< 2 >( m_el );
+            // Lets just try recreate the lookup to see how it goes
+            auto l = tk::cref_find(m_chfilenodes,cid);
+        //
+
+        // For each node, add the coordinate data to the store
+        int counter = 0;
+        std::cout << " size node store " << mesh_adapter->node_store.size() << std::endl;
+        std::cout << " size l " << l.size() << std::endl;
+        std::cout << " graphg size " << graph_size << std::endl;
+        for (auto id : connectivity)
+        {
+            auto n = l.find(id);
+
+            // file id
+            int store_id = n->first;
+
+            // global id => {x,y,z}
             // TODO: This id is out of the range of the small node store (which uses local ids)
             // TODO: Figure out what is global id and what is not
-            const auto& coord = mesh_adapter->node_store.get(id);
+            const auto& coord = mesh_adapter->node_store.get(store_id);
 
-            std::cout << "Adding " << c.first << " at " << id << std::endl;
+            // global id
+            // TODO: make this a single call of {1,2,3}
+            m_chcoords[c.first][id][0] = coord[0];
+            m_chcoords[c.first][id][1] = coord[1];
+            m_chcoords[c.first][id][2] = coord[2];
 
-						// global id
-						// TODO: make this a single call of {1,2,3}
-						m_chcoords[c.first][id][0] = coord[0];
-						m_chcoords[c.first][id][1] = coord[1];
-						m_chcoords[c.first][id][2] = coord[2];
+            counter++;
 
-				}
-		}
-  auto dist = chareDistribution();
+            //if (n != end(m_filenodes) && n->second < nnode)
+            //{
+            std::cout << "PE " << CkMyPe() << " Find id " << id << " n.second " << n->second << " first " << n->first <<
+                " pre file id " << n->second << " mem id first " << tk::cref_find(m_lid,n->first) <<
+                //" mem id second " << tk::cref_find(m_lid,n->second) <<
+            " x " << coord[0] <<
+            " y " << coord[1] <<
+            " z " << coord[2] <<
+            " counter " << counter << 
+                    std::endl;
 
-  for (int c=0; c<dist[1]; ++c) {
-    // Compute chare ID
-    auto cid = CkMyPe() * dist[0] + c;
-    // Guard those searches that operate on empty containers in serial
-    typename decltype(m_msum)::mapped_type msum;
-    if (!m_msum.empty()) msum = tk::cref_find( m_msum, cid );
-    typename decltype(m_chedgenodes)::mapped_type edno;
-    if (!m_chedgenodes.empty()) edno = tk::cref_find( m_chedgenodes, cid );
-    // Create worker array element
-    m_scheme.discInsert< tag::elem >(
-            cid,
-            m_host,
-            tk::cref_find(m_chinpoel,cid),
-            msum,
-            tk::cref_find(m_chfilenodes,cid),
-            edno,
-            m_nchare,
-            tk::cref_find(m_chcoords,cid),
-            CkMyPe()
-            );
-    m_scheme.doneDiscInserting< tag::elem >( cid );
-  }
+            /*
+            std::cout << "PE " << CkMyPe() << " Find id " << id << " n.second " << n->second << " first " << n->first <<
+                " pre file id " << n->second << " mem id first " << tk::cref_find(m_lid,n->first) <<
+                " mem id second " << tk::cref_find(m_lid,n->second) <<
+            " x " << coord[0] <<
+            " y " << coord[1] <<
+            " z " << coord[2] <<
+                    std::endl;
+            */
+                //er.readNode( n->second, tk::cref_find(m_lid,n->first), x, y, z );
+            //}
 
-  // Free storage for unique global mesh nodes chares on our PE will
-  // contribute to in a linear system as no longer needed.
-  tk::destroy( m_nodeset );
-  // Free storage for unique global mesh edges whose nodes chares on our
-  // PE will contribute to in a linear system as no longer needed.
-  tk::destroy( m_edgeset );
-  // Free storage of global mesh node ids associated to chares owned as it
-  // is no longer needed after creating the workers.
-  tk::destroy( m_chinpoel );
-  // Free maps associating old node IDs to new node IDs categorized by
-  // chares as it is no longer needed after creating the workers.
-  tk::destroy( m_chfilenodes );
-  // Free map storing new node IDs associated to edges categorized by chares
-  // owned as no linger needed after creating workers.
-  tk::destroy( m_chedgenodes );
-  // Free storage of map associating a set of chare IDs to old global mesh
-  // node IDs as it is no longer needed after creating the workers.
-  tk::destroy( m_nodechares );
-  // Free storage of global mesh node IDs associated to chare IDs bordering
-  // the mesh chunk held by and associated to chare IDs we own as it is no
-  // longer needed after creating the workers.
-  tk::destroy( m_msum );
+        }
+    }
+
+    auto dist = chareDistribution();
+
+    for (int c=0; c<dist[1]; ++c)
+    {
+        // Compute chare ID
+        auto cid = CkMyPe() * dist[0] + c;
+        // Guard those searches that operate on empty containers in serial
+        typename decltype(m_msum)::mapped_type msum;
+        if (!m_msum.empty()) msum = tk::cref_find( m_msum, cid );
+        typename decltype(m_chedgenodes)::mapped_type edno;
+        if (!m_chedgenodes.empty()) edno = tk::cref_find( m_chedgenodes, cid );
+
+        // Create worker array element
+        m_scheme.discInsert< tag::elem >(
+                cid,
+                m_host,
+                tk::cref_find(m_chinpoel,cid),
+                msum,
+                tk::cref_find(m_chfilenodes,cid),
+                edno,
+                m_nchare,
+                tk::cref_find(m_chcoords,cid),
+                CkMyPe()
+        );
+        m_scheme.doneDiscInserting< tag::elem >( cid );
+    }
+
+    // Free storage for unique global mesh nodes chares on our PE will
+    // contribute to in a linear system as no longer needed.
+    tk::destroy( m_nodeset );
+
+    // Free storage for unique global mesh edges whose nodes chares on our
+    // PE will contribute to in a linear system as no longer needed.
+    tk::destroy( m_edgeset );
+
+    // Free storage of global mesh node ids associated to chares owned as it
+    // is no longer needed after creating the workers.
+    tk::destroy( m_chinpoel );
+
+    // Free maps associating old node IDs to new node IDs categorized by
+    // chares as it is no longer needed after creating the workers.
+    tk::destroy( m_chfilenodes );
+
+    // Free map storing new node IDs associated to edges categorized by chares
+    // owned as no linger needed after creating workers.
+    tk::destroy( m_chedgenodes );
+
+    // Free storage of map associating a set of chare IDs to old global mesh
+    // node IDs as it is no longer needed after creating the workers.
+    tk::destroy( m_nodechares );
+
+    // Free storage of global mesh node IDs associated to chare IDs bordering
+    // the mesh chunk held by and associated to chare IDs we own as it is no
+    // longer needed after creating the workers.
+    tk::destroy( m_msum );
 }
 
 void

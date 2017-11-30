@@ -118,17 +118,41 @@ Discretization::Discretization(
   y.resize( nn );
   z.resize( nn );
 
+  // Print coords
+  //for (const auto &myPair : coords )
+  //{
+      //std::cout << CkMyPe() << ": " << "k: " << myPair.first << std::endl; //" v: " << myPair.second << std::endl;
+  //}
   for (auto global_id : m_gid)
   {
       // n is the ref to {x,y,z}
-      const auto& this_coord = tk::cref_find( coords, global_id);
-      auto local_id = tk::cref_find(m_lid, global_id);
+
+      std::cout << CkMyPe() << ": " << "find in fn " << std::endl;
+      auto n = m_filenodes.find(global_id);
+
+      std::cout << CkMyPe() << ": " << "find glob " << global_id << std::endl;
+      // global_id here seems to cause a crash
+      // n->seconds seems to work?
+      const auto& this_coord = tk::cref_find(coords, global_id);
+
+      std::cout << CkMyPe() << ": " << "find in m_lid first " << n->first << " second " << n->second << std::endl;
+      auto local_id = tk::cref_find(m_lid, n->first);
+      //auto local_id = tk::cref_find(m_lid, n->second);
+
+      std::cout << CkMyPe() << ": " << "found " << local_id << std::endl;
 
       x[local_id] = this_coord[0];
       y[local_id] = this_coord[1];
       z[local_id] = this_coord[2];
 
+      std::cout << CkMyPe() << ": " << " global_id " << global_id << " local id " << local_id <<
+          " x " << x[local_id] <<
+          " y " << y[local_id] <<
+          " z " << z[local_id] <<
+          std::endl;
+
   }
+
 
 }
 
@@ -156,7 +180,7 @@ Discretization::coord()
 // *****************************************************************************
 {
   // Read coordinates of nodes of the mesh chunk we operate on
-  //readCoords(); // Can now do in constructor
+  readCoords(); // Can now do in constructor
   // Add coordinates of mesh nodes newly generated to edge-mid points during
   // initial refinement
   // TODO: Is this still valid for AMR tests given the changes we've made?
@@ -184,6 +208,7 @@ Discretization::vol()
       ba{{ x[N[1]]-x[N[0]], y[N[1]]-y[N[0]], z[N[1]]-z[N[0]] }},
       ca{{ x[N[2]]-x[N[0]], y[N[2]]-y[N[0]], z[N[2]]-z[N[0]] }},
       da{{ x[N[3]]-x[N[0]], y[N[3]]-y[N[0]], z[N[3]]-z[N[0]] }};
+
     const auto J = tk::triple( ba, ca, da ) * 5.0 / 120.0;
     ErrChk( J > 0, "Element Jacobian non-positive: PE:" +
                    std::to_string(CkMyPe()) + ", node IDs: " +
@@ -354,19 +379,60 @@ Discretization::readCoords()
 
   auto nnode = er.readHeader();
 
-  auto& x = m_coord[0];
-  auto& y = m_coord[1];
-  auto& z = m_coord[2];
+  //auto& x = m_coord[0];
+  //auto& y = m_coord[1];
+  //auto& z = m_coord[2];
+
+  auto& x = m_coord_temp[0];
+  auto& y = m_coord_temp[1];
+  auto& z = m_coord_temp[2];
+
 
   auto nn = m_lid.size();
   x.resize( nn );
   y.resize( nn );
   z.resize( nn );
 
+    //! \param[in] fid Node id in file whose coordinates to read
+    //! \param[in] mid Node id in memory to which to put new cordinates
+    //! \param[in,out] x Vector of x coordinates to push to
+    //! \param[in,out] y Vector of y coordinates to push to
+    //! \param[in,out] z Vector of z coordinates to push to
   for (auto p : m_gid) {
     auto n = m_filenodes.find(p);
     if (n != end(m_filenodes) && n->second < nnode)
-      er.readNode( n->second, tk::cref_find(m_lid,n->first), x, y, z );
+    {
+        er.readNode( n->second, tk::cref_find(m_lid,n->first), x, y, z );
+        int id = tk::cref_find(m_lid,n->first);
+        std::cout << "PE " << CkMyPe() << " p " << p << " ffile id " << n->second << " first " << n->first << " mem id " << tk::cref_find(m_lid,n->first) <<
+          " x " << x[id] <<
+          " y " << y[id] <<
+          " z " << z[id] <<
+            std::endl;
+    }
+  }
+
+  // TODO: Remove this stuff
+  // Do some debug printing
+  std::cout << "File: " << std::endl;
+  for (int i = 0; i < m_coord_temp[0].size(); i++) {
+      std::cout <<
+          "PE " << CkMyPe() <<
+          " i " << i <<
+          " x " << m_coord_temp[0][i] <<
+          " y " << m_coord_temp[1][i] <<
+          " z " << m_coord_temp[2][i] <<
+          std::endl;
+  }
+  std::cout << "Passed: " << std::endl;
+  for (int i = 0; i < m_coord[0].size(); i++) {
+      std::cout <<
+          "PE " << CkMyPe() <<
+          " i " << i <<
+          " x " << m_coord[0][i] <<
+          " y " << m_coord[1][i] <<
+          " z " << m_coord[2][i] <<
+          std::endl;
   }
 }
 
