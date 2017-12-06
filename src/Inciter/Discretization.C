@@ -123,6 +123,7 @@ Discretization::Discretization(
   //{
       //std::cout << CkMyPe() << ": " << "k: " << myPair.first << std::endl; //" v: " << myPair.second << std::endl;
   //}
+  /*
   for (auto global_id : m_gid)
   {
       // n is the ref to {x,y,z}
@@ -152,6 +153,60 @@ Discretization::Discretization(
           std::endl;
 
   }
+  */
+
+  readCoords(); // TODO: Remove this call
+  for (auto p : m_gid) {
+    auto n = m_filenodes.find(p);
+    // TOOD: Remove er
+    tk::ExodusIIMeshReader er( g_inputdeck.get< tag::cmd, tag::io, tag::input >() );
+    auto nnode = er.readHeader();
+    if (n != end(m_filenodes) && n->second < nnode)
+    {
+        //er.readNode( n->second, tk::cref_find(m_lid,n->first), x, y, z );
+        //int id = tk::cref_find(m_lid,n->first);
+
+      //const auto& this_coord = tk::cref_find(coords, n->second);
+      //int find_id = p;
+      int find_id = n->second;
+      const auto& this_coord = tk::cref_find(coords, find_id);
+      //auto local_id = tk::cref_find(m_lid,n->first);
+      auto local_id = tk::cref_find(m_lid,p);
+      x[local_id] = this_coord[0];
+      y[local_id] = this_coord[1];
+      z[local_id] = this_coord[2];
+
+        std::cout << "PE " << CkMyPe() << " p " << p << " cons second " << n->second << " first " << n->first << " mem id " << local_id <<" find_id " << find_id <<
+          " x " << this_coord[0] <<
+          " y " << this_coord[1] <<
+          " z " << this_coord[2] <<
+            std::endl;
+    }
+    else
+    {
+        std::cout << "CONS SKIP" << p << std::endl;
+    }
+  }
+    /*
+  for (auto& n : m_filenodes)
+  {
+      std::cout << CkMyPe() << ": " << "find in m_lid first " << n.first << " second " << n.second << std::endl;
+  }
+  for (auto& n : m_filenodes)
+  {
+      std::cout << CkMyPe() << ": " << "find in m_lid first " << n.first << " second " << n.second << std::endl;
+      const auto& this_coord = tk::cref_find(coords, n.second);
+      auto local_id = tk::cref_find(m_lid, n.first);
+      x[local_id] = this_coord[0];
+      y[local_id] = this_coord[1];
+      z[local_id] = this_coord[2];
+      std::cout << CkMyPe() << " local id " << local_id <<
+          " x " << x[local_id] <<
+          " y " << y[local_id] <<
+          " z " << z[local_id] <<
+          std::endl;
+  }
+  */
 
 
 }
@@ -180,7 +235,7 @@ Discretization::coord()
 // *****************************************************************************
 {
   // Read coordinates of nodes of the mesh chunk we operate on
-  readCoords(); // Can now do in constructor
+  //readCoords(); // Can now do in constructor
   // Add coordinates of mesh nodes newly generated to edge-mid points during
   // initial refinement
   // TODO: Is this still valid for AMR tests given the changes we've made?
@@ -379,6 +434,8 @@ Discretization::readCoords()
 
   auto nnode = er.readHeader();
 
+  std::cout << "nnode " << nnode << std::endl;
+
   //auto& x = m_coord[0];
   //auto& y = m_coord[1];
   //auto& z = m_coord[2];
@@ -404,7 +461,7 @@ Discretization::readCoords()
     {
         er.readNode( n->second, tk::cref_find(m_lid,n->first), x, y, z );
         int id = tk::cref_find(m_lid,n->first);
-        std::cout << "PE " << CkMyPe() << " p " << p << " ffile id " << n->second << " first " << n->first << " mem id " << tk::cref_find(m_lid,n->first) <<
+        std::cout << "PE " << CkMyPe() << " p " << p << " ffile second " << n->second << " first " << n->first << " (mem) id " << id <<
           " x " << x[id] <<
           " y " << y[id] <<
           " z " << z[id] <<
@@ -418,22 +475,24 @@ Discretization::readCoords()
   for (int i = 0; i < m_coord_temp[0].size(); i++) {
       std::cout <<
           "PE " << CkMyPe() <<
-          " i " << i <<
+          "file i " << i <<
           " x " << m_coord_temp[0][i] <<
           " y " << m_coord_temp[1][i] <<
           " z " << m_coord_temp[2][i] <<
           std::endl;
   }
+  /*
   std::cout << "Passed: " << std::endl;
   for (int i = 0; i < m_coord[0].size(); i++) {
       std::cout <<
           "PE " << CkMyPe() <<
-          " i " << i <<
+          "pass i " << i <<
           " x " << m_coord[0][i] <<
           " y " << m_coord[1][i] <<
           " z " << m_coord[2][i] <<
           std::endl;
   }
+  */
 }
 
 void
@@ -499,8 +558,8 @@ Discretization::writeMesh()
       tk::ExodusIIMeshWriter ew( m_outFilename, tk::ExoWriter::CREATE );
       // Write chare mesh initializing element connectivity and point coords
       ew.writeMesh( tk::UnsMesh( m_inpoel, m_coord ) );
-    
-    }    
+
+    }
   }
 }
 
@@ -551,7 +610,7 @@ Discretization::writeMeta() const
     auto filetype = g_inputdeck.get< tag::selected, tag::filetype >();
 
     if (filetype == tk::ctr::FieldFileType::ROOT) {
- 
+
       tk::RootMeshWriter rmw( m_outFilename, 1 );
 
       // Collect nodal field output names from all PDEs
@@ -629,9 +688,9 @@ Discretization::status()
     // estimate time elapsed and time for accomplishment
     tk::Timer::Watch ete, eta;
     m_timer.eta( term-t0, m_t-t0, nstep, m_it, ete, eta );
- 
+
     tk::Print print( verbose ? std::cout : std::clog );
- 
+
     // Output one-liner
     print << std::setfill(' ') << std::setw(8) << m_it << "  "
           << std::scientific << std::setprecision(6)
@@ -644,11 +703,11 @@ Discretization::status()
           << std::setw(3) << eta.hrs.count() << ":"
           << std::setw(2) << eta.min.count() << ":"
           << std::setw(2) << eta.sec.count() << "  ";
-  
+
     // Augment one-liner with output indicators
     if (!(m_it % field)) print << 'F';
     if (!(m_it % diag)) print << 'D';
-  
+
     print << std::endl;
   }
 }

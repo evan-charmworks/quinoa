@@ -230,6 +230,7 @@ namespace AMR {
             // Alias for id_to_coordinate
             coord_t get(size_t id)
             {
+                assert(id < size());
                 return id_to_coordinate(id);
             }
 

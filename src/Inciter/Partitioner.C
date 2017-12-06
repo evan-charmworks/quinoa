@@ -17,7 +17,7 @@
 
 #include "Partitioner.h"
 #include "../Mesh/Reorder.h" // TODO: Remove this
- 
+
 namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;
@@ -1212,14 +1212,16 @@ Partitioner::createDiscWorkers()
     // TODO: Check the size of this right
     mesh_adapter->init(m_tetinpoel, m_tetinpoel.size() );
 
-    auto* er = new tk::ExodusIIMeshReader( g_inputdeck.get< tag::cmd, tag::io, tag::input >() );
+  tk::ExodusIIMeshReader
+    er( g_inputdeck.get< tag::cmd, tag::io, tag::input >() );
 
     auto gid = m_tetinpoel;
     tk::unique( gid );
     auto ext = tk::extents( gid );
 
     // TODO: Is it a good idea to init it to the full file?
-    auto file_coord = er->readNodes( ext );
+    auto nnode = er.readHeader();
+    auto file_coord = er.readNodes( ext );
 
     auto& x = std::get< 0 >( file_coord );
     auto& y = std::get< 1 >( file_coord );
@@ -1231,7 +1233,7 @@ Partitioner::createDiscWorkers()
   for (int i = 0; i < x.size(); i++) {
       std::cout <<
           "PE " << CkMyPe() <<
-          " i " << i <<
+          "read i " << i <<
           " x " << x[i] <<
           " y " << y[i] <<
           " z " << z[i] <<
@@ -1256,6 +1258,13 @@ Partitioner::createDiscWorkers()
             &z,
             graph_size
     );
+    std::cout << "id 0 " <<
+        " x " << mesh_adapter->node_store.get(0)[0] <<
+        " y " << mesh_adapter->node_store.get(0)[1] <<
+        " z " << mesh_adapter->node_store.get(0)[2] <<
+        std::endl;
+
+    // m_chfilenodes[ node_id ] = file id
 
     // Categorize by coord
     // Loop over the inpoel categorized by char
@@ -1279,42 +1288,58 @@ Partitioner::createDiscWorkers()
             std::unordered_map< std::size_t, std::size_t > m_lid = std::get< 2 >( m_el );
             // Lets just try recreate the lookup to see how it goes
             auto l = tk::cref_find(m_chfilenodes,cid);
-        //
+            for (int i = 0; i < l.size(); i++)
+            {
+                std::cout << "l " << i << " = " << l[i] << std::endl;
+            }
 
-        // For each node, add the coordinate data to the store
-        int counter = 0;
-        std::cout << " size node store " << mesh_adapter->node_store.size() << std::endl;
-        std::cout << " size l " << l.size() << std::endl;
-        std::cout << " graphg size " << graph_size << std::endl;
-        for (auto id : connectivity)
-        {
-            auto n = l.find(id);
+
+    // For each node, add the coordinate data to the store
+    int counter = 0;
+    std::cout << "PE " << CkMyPe() << " size node store " << mesh_adapter->node_store.size() << std::endl;
+    std::cout << "PE " << CkMyPe() << " size l " << l.size() << std::endl;
+    std::cout << "PE " << CkMyPe() << " graph size " << graph_size << std::endl;
+    for (auto id : connectivity)
+    {
+        auto n = l.find(id);
+
+            // TODO: is it sane to have this check here?
+            if (n != end(l) && n->second < nnode)
+            {
 
             // file id
-            int store_id = n->first;
+            // n->first picks up wrong coords but "works" to the end
+            // n->second looks for really big coords, not sure why
+            int read_id = n->second; //n->first;
+            int store_id = n->second; //n->first;
 
             // global id => {x,y,z}
             // TODO: This id is out of the range of the small node store (which uses local ids)
             // TODO: Figure out what is global id and what is not
-            const auto& coord = mesh_adapter->node_store.get(store_id);
+            std::cout << "find coord " << read_id << std::endl;
+            const auto& coord = mesh_adapter->node_store.get(read_id);
+            std::cout << "find mem id " << n->first << std::endl;
+            auto mem_id = tk::cref_find(m_lid,n->first);
 
             // global id
             // TODO: make this a single call of {1,2,3}
-            m_chcoords[c.first][id][0] = coord[0];
-            m_chcoords[c.first][id][1] = coord[1];
-            m_chcoords[c.first][id][2] = coord[2];
+            m_chcoords[c.first][store_id][0] = coord[0];
+            m_chcoords[c.first][store_id][1] = coord[1];
+            m_chcoords[c.first][store_id][2] = coord[2];
 
             counter++;
 
             //if (n != end(m_filenodes) && n->second < nnode)
             //{
             std::cout << "PE " << CkMyPe() << " Find id " << id << " n.second " << n->second << " first " << n->first <<
-                " pre file id " << n->second << " mem id first " << tk::cref_find(m_lid,n->first) <<
+                " pre file id " << n->second << " mem id first " << mem_id <<
+                " store id " << store_id <<
+                " read id " << read_id << 
                 //" mem id second " << tk::cref_find(m_lid,n->second) <<
             " x " << coord[0] <<
             " y " << coord[1] <<
             " z " << coord[2] <<
-            " counter " << counter << 
+            " counter " << counter <<
                     std::endl;
 
             /*
@@ -1329,6 +1354,11 @@ Partitioner::createDiscWorkers()
                 //er.readNode( n->second, tk::cref_find(m_lid,n->first), x, y, z );
             //}
 
+            }
+            else
+            {
+                std::cout << "OUT OF BOUNDS" << std::endl;
+            }
         }
     }
 
