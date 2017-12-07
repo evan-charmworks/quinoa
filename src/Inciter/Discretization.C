@@ -118,97 +118,29 @@ Discretization::Discretization(
   y.resize( nn );
   z.resize( nn );
 
-  // Print coords
-  //for (const auto &myPair : coords )
-  //{
-      //std::cout << CkMyPe() << ": " << "k: " << myPair.first << std::endl; //" v: " << myPair.second << std::endl;
-  //}
-  /*
-  for (auto global_id : m_gid)
-  {
-      // n is the ref to {x,y,z}
+  tk::ExodusIIMeshReader er( g_inputdeck.get< tag::cmd, tag::io, tag::input >() );
+  auto nnode = er.readHeader();
 
-      std::cout << CkMyPe() << ": " << "find in fn " << std::endl;
-      auto n = m_filenodes.find(global_id);
-
-      std::cout << CkMyPe() << ": " << "find glob " << global_id << std::endl;
-      // global_id here seems to cause a crash
-      // n->seconds seems to work?
-      const auto& this_coord = tk::cref_find(coords, global_id);
-
-      std::cout << CkMyPe() << ": " << "find in m_lid first " << n->first << " second " << n->second << std::endl;
-      auto local_id = tk::cref_find(m_lid, n->first);
-      //auto local_id = tk::cref_find(m_lid, n->second);
-
-      std::cout << CkMyPe() << ": " << "found " << local_id << std::endl;
-
-      x[local_id] = this_coord[0];
-      y[local_id] = this_coord[1];
-      z[local_id] = this_coord[2];
-
-      std::cout << CkMyPe() << ": " << " global_id " << global_id << " local id " << local_id <<
-          " x " << x[local_id] <<
-          " y " << y[local_id] <<
-          " z " << z[local_id] <<
-          std::endl;
-
-  }
-  */
-
-  readCoords(); // TODO: Remove this call
   for (auto p : m_gid) {
-    auto n = m_filenodes.find(p);
-    // TOOD: Remove er
-    tk::ExodusIIMeshReader er( g_inputdeck.get< tag::cmd, tag::io, tag::input >() );
-    auto nnode = er.readHeader();
-    if (n != end(m_filenodes) && n->second < nnode)
-    {
-        //er.readNode( n->second, tk::cref_find(m_lid,n->first), x, y, z );
-        //int id = tk::cref_find(m_lid,n->first);
 
-      //const auto& this_coord = tk::cref_find(coords, n->second);
-      //int find_id = p;
-      int find_id = n->second;
-      const auto& this_coord = tk::cref_find(coords, find_id);
-      //auto local_id = tk::cref_find(m_lid,n->first);
-      auto local_id = tk::cref_find(m_lid,p);
-      x[local_id] = this_coord[0];
-      y[local_id] = this_coord[1];
-      z[local_id] = this_coord[2];
+      // TODO: this bounds check can presumably be removed
+      auto n = m_filenodes.find(p);
+      if (n != end(m_filenodes) && n->second < nnode)
+      {
+          int find_id = n->second;
+          const auto& this_coord = tk::cref_find(coords, find_id);
 
-        std::cout << "PE " << CkMyPe() << " p " << p << " cons second " << n->second << " first " << n->first << " mem id " << local_id <<" find_id " << find_id <<
-          " x " << this_coord[0] <<
-          " y " << this_coord[1] <<
-          " z " << this_coord[2] <<
-            std::endl;
-    }
-    else
-    {
-        std::cout << "CONS SKIP" << p << std::endl;
-    }
+          auto local_id = tk::cref_find(m_lid,p);
+          x[local_id] = this_coord[0];
+          y[local_id] = this_coord[1];
+          z[local_id] = this_coord[2];
+
+      }
+      /*else
+      {
+          std::cout << "CONS SKIP" << p << std::endl;
+      }*/
   }
-    /*
-  for (auto& n : m_filenodes)
-  {
-      std::cout << CkMyPe() << ": " << "find in m_lid first " << n.first << " second " << n.second << std::endl;
-  }
-  for (auto& n : m_filenodes)
-  {
-      std::cout << CkMyPe() << ": " << "find in m_lid first " << n.first << " second " << n.second << std::endl;
-      const auto& this_coord = tk::cref_find(coords, n.second);
-      auto local_id = tk::cref_find(m_lid, n.first);
-      x[local_id] = this_coord[0];
-      y[local_id] = this_coord[1];
-      z[local_id] = this_coord[2];
-      std::cout << CkMyPe() << " local id " << local_id <<
-          " x " << x[local_id] <<
-          " y " << y[local_id] <<
-          " z " << z[local_id] <<
-          std::endl;
-  }
-  */
-
-
 }
 
 void
@@ -434,65 +366,22 @@ Discretization::readCoords()
 
   auto nnode = er.readHeader();
 
-  std::cout << "nnode " << nnode << std::endl;
-
-  //auto& x = m_coord[0];
-  //auto& y = m_coord[1];
-  //auto& z = m_coord[2];
-
-  auto& x = m_coord_temp[0];
-  auto& y = m_coord_temp[1];
-  auto& z = m_coord_temp[2];
-
+  auto& x = m_coord[0];
+  auto& y = m_coord[1];
+  auto& z = m_coord[2];
 
   auto nn = m_lid.size();
   x.resize( nn );
   y.resize( nn );
   z.resize( nn );
 
-    //! \param[in] fid Node id in file whose coordinates to read
-    //! \param[in] mid Node id in memory to which to put new cordinates
-    //! \param[in,out] x Vector of x coordinates to push to
-    //! \param[in,out] y Vector of y coordinates to push to
-    //! \param[in,out] z Vector of z coordinates to push to
   for (auto p : m_gid) {
     auto n = m_filenodes.find(p);
     if (n != end(m_filenodes) && n->second < nnode)
     {
         er.readNode( n->second, tk::cref_find(m_lid,n->first), x, y, z );
-        int id = tk::cref_find(m_lid,n->first);
-        std::cout << "PE " << CkMyPe() << " p " << p << " ffile second " << n->second << " first " << n->first << " (mem) id " << id <<
-          " x " << x[id] <<
-          " y " << y[id] <<
-          " z " << z[id] <<
-            std::endl;
     }
   }
-
-  // TODO: Remove this stuff
-  // Do some debug printing
-  std::cout << "File: " << std::endl;
-  for (int i = 0; i < m_coord_temp[0].size(); i++) {
-      std::cout <<
-          "PE " << CkMyPe() <<
-          "file i " << i <<
-          " x " << m_coord_temp[0][i] <<
-          " y " << m_coord_temp[1][i] <<
-          " z " << m_coord_temp[2][i] <<
-          std::endl;
-  }
-  /*
-  std::cout << "Passed: " << std::endl;
-  for (int i = 0; i < m_coord[0].size(); i++) {
-      std::cout <<
-          "PE " << CkMyPe() <<
-          "pass i " << i <<
-          " x " << m_coord[0][i] <<
-          " y " << m_coord[1][i] <<
-          " z " << m_coord[2][i] <<
-          std::endl;
-  }
-  */
 }
 
 void

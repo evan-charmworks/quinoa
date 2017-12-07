@@ -1,21 +1,13 @@
 #ifndef AMR_edge_store_h
 #define AMR_edge_store_h
 
+#include "Base/Exception.h"
+
 namespace AMR {
 
     class edge_store_t {
         public:
-            // TODO: convert this to an unordered map with a custom hash (can lift from Quinoa)
             edges_t edges;
-
-            // Node connectivity does this any way, but in a slightly less efficient way
-            // Maps the edge to the child node which splits it
-                // This was added retrospectivley to support the operation "for
-                // edge formed of initial nodes {A,B}, what node(s) were added
-                // between them"
-                // NOTE: At some point, this could probably be deleted..
-                // NOTE: This is only mainted by split.
-            //std::map<edge_t, size_t> children;
 
             size_t size()
             {
@@ -29,12 +21,12 @@ namespace AMR {
              * @param A First end node
              * @param B Second end node
              * @param AB Intermediate node
-             * @param lock_case Lock case for the new edges
+             * @param lockcase Lock case for the new edges
              */
-            void split(size_t A, size_t B, size_t AB, Edge_Lock_Case lock_case)
+            void split(size_t A, size_t B, size_t AB, Edge_Lock_Case lockcase)
             {
-                generate(A, AB, lock_case);
-                generate(B, AB, lock_case);
+                generate(A, AB, lockcase);
+                generate(B, AB, lockcase);
 
                 //children.insert( std::pair<edge_t, size_t>(edge_t(A,B), AB));
                 // Generate pertinent keys
@@ -50,16 +42,16 @@ namespace AMR {
              *
              * @param A First node
              * @param B Second node
-             * @param lock_case Lock case for new edge
+             * @param lockcase Lock case for new edge
              */
-            void generate(size_t A, size_t B, Edge_Lock_Case lock_case)
+            void generate(size_t A, size_t B, Edge_Lock_Case lockcase)
             {
-                assert(A != B);
+                Assert(A != B, "Trying to add edge between duplicate IDs");
                 // Generate key
                 edge_t keyAB = nodes_to_key(A, B);
                 //Create refined edge
                 Edge_Refinement edgeAB = Edge_Refinement(A, B, 0.00, false,
-                        false, false, lock_case);
+                        false, false, lockcase);
                 // Add edge to store
                 add(keyAB, edgeAB);
             }
@@ -82,14 +74,13 @@ namespace AMR {
              */
             Edge_Refinement& get(edge_t key)
             {
-                //trace_out << "get edge " << key << std::endl;
-                assert( exists(key) );
-                return edges.at(key);
+                Assert( exists(key), "Key does not exist" );
+                return edges[key];
             }
 
             Edge_Lock_Case lock_case(edge_t key)
             {
-                return get(key).lockCase;
+                return get(key).lock_case;
             }
 
             void erase(edge_t key)
@@ -148,8 +139,9 @@ namespace AMR {
                 size_t B = face_ids[1];
                 size_t C = face_ids[2];
 
+                // TODO: Investigate if AB BC CA is a much better jacobian ordering
                 edge_t key = nodes_to_key(A,B);
-                key_list[0] = key;
+                key_list[0] = key; // TODO: Is it OK to use copy assignment here?
 
                 key = nodes_to_key(A,C);
                 key_list[1] = key;
@@ -167,13 +159,11 @@ namespace AMR {
              * @param ids List of ids to mark for refinement
              */
             void mark_edges_for_refinement(std::vector<node_pair_t> ids) {
-                for (size_t i = 0; i < ids.size(); i++)
+                for (const auto& id : ids)
                 {
-                    node_pair_t pair = ids[i];
-                    edge_t key = nodes_to_key(pair[0], pair[1]);
+                    edge_t key = nodes_to_key(id[0], id[1]);
 
                     mark_for_refinement(key);
-                    trace_out << get(key).needs_refining << std::endl;
                 }
             }
 
@@ -187,7 +177,7 @@ namespace AMR {
              */
             void mark_for_refinement(edge_t key)
             {
-                    assert( exists(key) );
+                    Assert( exists(key), "Key does not exist" );
                     get(key).needs_refining = true;
             }
 
@@ -198,16 +188,15 @@ namespace AMR {
              */
             void unmark_for_refinement(edge_t key)
             {
-                    assert( exists(key) );
+                    Assert( exists(key), "Key does not exist");
                     get(key).needs_refining = false;
             }
 
             // TODO: Document this (and implement!)
             void mark_edges_for_derefinement(std::vector<node_pair_t> ids) {
-                for (size_t i = 0; i < ids.size(); i++)
+                for (const auto& id : ids)
                 {
-                    node_pair_t pair = ids[i];
-                    edge_t key = nodes_to_key(pair[0], pair[1]);
+                    edge_t key = nodes_to_key(id[0], id[1]);
 
                     mark_edge_for_derefinement(key);
                 }
@@ -228,8 +217,7 @@ namespace AMR {
             // TODO: Should this return a pointer/reference?
             edge_list_t generate_keys(tet_t tet)
             {
-                // FIXME : Generate these with a (2d) loop and not hard code them?
-                    // DRY THIS
+                // NOTE: Generate these with a (2d) loop and not hard code them?
                 edge_list_t key_list;
 
                 size_t A = tet[0];
@@ -266,13 +254,16 @@ namespace AMR {
             void print() {
                 for (const auto& kv : edges)
                 {
-                    trace_out << "edge " << kv.first << " between " <<
+                    std::cout << "edge " << kv.first << " between " <<
                         kv.second.A << " and " << kv.second.B << " val " <<
                         kv.second.refinement_criteria <<
                     std::endl;
                 }
             }
 
+            /*
+            // This function is not needed, as we're no longer required to
+            // update ids inplace
             void replace(size_t old_id, size_t new_id)
             {
                 for (const auto& kv : edges)
@@ -299,6 +290,7 @@ namespace AMR {
 
                 }
             }
+            */
 
             /*
             // TODO: Document this

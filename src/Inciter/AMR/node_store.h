@@ -3,7 +3,8 @@
 
 #include <cmath>
 
-#include "types.h"
+#include "Base/Exception.h"
+#include "AMR_types.h"
 #include "tet_store.h"
 
 // TODO: make this have a base class to support multiple generator schemes
@@ -14,9 +15,9 @@ namespace AMR {
     {
 
         private:
-            coord_array_t m_x;
-            coord_array_t m_y;
-            coord_array_t m_z;
+            coord_type* m_x;
+            coord_type* m_y;
+            coord_type* m_z;
 
             // We really don't want people to pass this by value..
             // (Because we store refs in here, which are consts..)
@@ -25,107 +26,89 @@ namespace AMR {
             node_store_t& operator=(const node_store_t&) = delete;
 
         public:
+            // TODO: This needs to set the member variables
             node_store_t() { } // default cons
-
-            // TODO: Document this
-            coord_array_t x_array()
-            {
-                return m_x;
-            }
-            // TODO: Document this
-            coord_array_t y_array()
-            {
-                return m_y;
-            }
-            // TODO: Document this
-            coord_array_t z_array()
-            {
-                return m_z;
-            }
 
             size_t m_graphsize;
 
-            void set_x(coord_array_t* x_in) { m_x = *x_in; }
-            void set_y(coord_array_t* y_in) { m_y = *y_in; }
-            void set_z(coord_array_t* z_in) { m_z = *z_in; }
+            void set_x(coord_type* x_in) { m_x = x_in; }
+            void set_y(coord_type* y_in) { m_y = y_in; }
+            void set_z(coord_type* z_in) { m_z = z_in; }
+
+            /**
+             * @brief Function to add x coordinate data
+             *
+             * @param xc Data to add
+             */
+            void add_x(real_t xc) { m_x->push_back(xc); }
+
+            /**
+             * @brief Function to add y coordinate data
+             *
+             * @param yc Data to add
+             */
+            void add_y(real_t yc) { m_y->push_back(yc); }
 
             /**
              * @brief Function to add z coordinate data
              *
-             * @param x Data to add
+             * @param zc data to add
              */
-            void add_x(real_t x) { m_x.push_back(x); }
-
-            /**
-             * @brief Function to add z coordinate data
-             *
-             * @param y Data to add
-             */
-            void add_y(real_t y) { m_y.push_back(y); }
-
-            /**
-             * @brief Function to add z coordinate data
-             *
-             * @param z data to add
-             */
-            void add_z(real_t z) { m_z.push_back(z); }
-
+            void add_z(real_t zc) { m_z->push_back(zc); }
             real_t x(size_t id)
             {
-                return m_x[id];
+                return (*m_x)[id];
             }
             real_t y(size_t id)
             {
-                return m_y[id];
+                return (*m_y)[id];
             }
             real_t z(size_t id)
             {
-                return m_z[id];
+                return (*m_z)[id];
             }
 
-            int size()
+            size_t size()
             {
-                return m_x.size();
+                return m_x->size();
             }
 
             // TODO: Document this
             void print()
             {
-								for (size_t i = 0; i < size(); i++)
-								{
+                for (size_t i = 0; i < size(); i++)
+                {
                     std::cout << "Node " << i << " has coords :" <<
-												x(i) << ", " <<
-												y(i) << ", " <<
-												z(i) << ", " <<
-												std::endl;
-								}
-						}
+                        x(i) << ", " <<
+                        y(i) << ", " <<
+                        z(i) << ", " <<
+                        std::endl;
+               }
+            }
 
 
             /**
              * @brief Function to add a new node
              *
-             * @param x x val of node
-             * @param y y val of node
-             * @param z z val of node
+             * @param xc x val of node
+             * @param yc y val of node
+             * @param zc z val of node
              *
              * @return id of node added
              */
-            size_t add(real_t x, real_t y, real_t z) {
+            size_t add(real_t xc, real_t yc, real_t zc) {
 
-                // Need to: Add to {x,y,z} Add any connectivity?
+                // Need to: Add to {xc,yc,zc} Add any connectivity?
 
                 // Check if the node already exists
-                int already_exists = check_node_exists(x,y,z);
+                int already_exists = check_node_exists(xc,yc,zc);
 
                 if (already_exists == -1) {
-                    size_t return_node_id = add_coordinates(x,y,z);
-                    m_graphsize++;
-                    trace_out << "--> Made " << return_node_id << std::endl;
+                    size_t return_node_id = add_coordinates(xc,yc,zc);
+                    m_graphsize++; // TODO: how best to deal with this?
                     return return_node_id;
                 }
                 else {
-                    trace_out << "--> Reusing " << already_exists << std::endl;
                     return static_cast<size_t>(already_exists);
                 }
 
@@ -138,7 +121,7 @@ namespace AMR {
              *
              * @return Id of node added
              */
-            size_t add(coord_t coord_tuple)
+            size_t add(coordinate_t coord_tuple)
             {
                 return add( coord_tuple[0], coord_tuple[1], coord_tuple[2]);
             }
@@ -146,17 +129,44 @@ namespace AMR {
             /**
              * @brief Function to add a new point/coordinates
              *
-             * @param x x val
-             * @param y y val
-             * @param z z val
+             * @param xc x val
+             * @param yc y val
+             * @param zc z val
              *
              * @return id of coordinate added
              */
-            size_t add_coordinates(real_t x, real_t y, real_t z) {
-                add_x(x);
-                add_y(y);
-                add_z(z);
+            size_t add_coordinates(real_t xc, real_t yc, real_t zc) {
+                add_x(xc);
+                add_y(yc);
+                add_z(zc);
                 return size()-1; // -1 because of the 0 index
+            }
+
+            /**
+             * @brief Function to add a new node
+             *
+             * @param xc x val of node
+             * @param yc y val of node
+             * @param zc z val of node
+             *
+             * @return id of node added
+             */
+            size_t add_node(real_t xc, real_t yc, real_t zc) {
+
+                // Need to: Add to {xc,y,z} Add any connectivity?
+
+                // Check if the node already exists
+                int already_exists = check_node_exists(xc,yc,zc);
+
+                if (already_exists == -1) {
+                    size_t return_node_id = add_coordinates(xc,yc,zc);
+                    m_graphsize++; // TODO: how to deal with this?
+                    return return_node_id;
+                }
+                else {
+                    return static_cast<size_t>(already_exists);
+                }
+
             }
 
             // TODO: Remove all calls to this as it's fairly expensive...
@@ -184,9 +194,7 @@ namespace AMR {
                         std::abs( z(i) - z_in) < eps
                     )
                     {
-                        trace_out << "!!!! x " << x_in << " y " << y_in <<
-                            " z " << z_in << " exits " << std::endl;
-                            return static_cast<int>(i);
+                        return static_cast<int>(i);
                     }
                 }
 
@@ -202,10 +210,10 @@ namespace AMR {
              *
              * @return The mid point
              */
-            coord_t find_mid_point(size_t id1, size_t id2)
+            coordinate_t find_mid_point(size_t id1, size_t id2)
             {
-                coord_t edge_node_A = id_to_coordinate(id1);
-                coord_t edge_node_B = id_to_coordinate(id2);
+                coordinate_t edge_node_A = id_to_coordinate(id1);
+                coordinate_t edge_node_B = id_to_coordinate(id2);
                 return AMR::util::find_mid_point(edge_node_A, edge_node_B);
             }
 
@@ -217,20 +225,18 @@ namespace AMR {
              *
              * @return List (array) of coordinate data
              */
-            coord_t id_to_coordinate(size_t id)
+            coordinate_t id_to_coordinate(size_t id)
             {
-                assert( id < size());
+                Assert( id < size(), "Invalid ID");
 
                 // Note: extra braces are to appease Clangs warning generator.
-                //   (It's probably ok to remove them....)
-                coord_t c = { {x(id), y(id), z(id) } };
+                //   (It's probably OK to remove them....)
+                coordinate_t c = { {x(id), y(id), z(id) } };
                 return c;
             }
 
-            // Alias for id_to_coordinate
-            coord_t get(size_t id)
+            coordinate_t get(size_t id)
             {
-                assert(id < size());
                 return id_to_coordinate(id);
             }
 

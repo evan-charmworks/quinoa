@@ -235,9 +235,10 @@ class Discretization : public CBase_Discretization {
     //! \brief Alias to local node ids associated to the global ones of owned
     //!    elements in m_el
     std::unordered_map< std::size_t, std::size_t > m_lid = std::get< 2 >( m_el );
+
     //! Mesh point coordinates
     tk::UnsMesh::Coords m_coord;
-    tk::UnsMesh::Coords m_coord_temp; // TODO : remove this
+
     //! Points surrounding points of our chunk of the mesh
     std::pair< std::vector< std::size_t >, std::vector< std::size_t > > m_psup;
     //! \brief Global mesh node IDs bordering the mesh chunk held by fellow

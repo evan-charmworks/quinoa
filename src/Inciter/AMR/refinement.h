@@ -3,6 +3,7 @@
 
 #include <algorithm>
 
+#include "Base/Exception.h"
 #include "tet_store.h"
 #include "node_connectivity.h"
 
@@ -49,12 +50,17 @@ namespace AMR {
                 Refinement_State& master_element = tet_store->data(tet_id);
 
                 // These asserts mean we never actually try refine a 1:2 or 1:4
-                assert( master_element.refinement_case !=
-                        Refinement_Case::one_to_two);
-                assert( master_element.refinement_case !=
-                        Refinement_Case::one_to_four);
+                Assert(
+                    master_element.refinement_case != Refinement_Case::one_to_two,
+                    "Trying to refine a 1:2 (not allowed)"
+                );
 
-                assert( tet_store->is_active(tet_id) );
+                Assert(
+                    master_element.refinement_case != Refinement_Case::one_to_four,
+                    "Trying to refine a 1:4 (not allowed)"
+                );
+
+                Assert( tet_store->is_active(tet_id), "ID is not active" );
 
                 // Check this won't take us past the max refinement level
                 if (master_element.refinement_level >= MAX_REFINEMENT_LEVEL)
@@ -80,24 +86,7 @@ namespace AMR {
                 refine_one_to_two( tet_id, nodes[0], nodes[1]);
             }
 
-            /**
-             * @brief Method which takes a tet id, and transforms arguments
-             * into the form needed for the main 1:2 refinement method
-             *
-             * @param tet_id The id to refine 1:2
-             */
-            void refine_one_to_two(
-                    size_t tet_id,
-                    std::string edge_key
-            )
-            {
-                std::vector<std::string> nodes = util::split(edge_key,KEY_DELIM);
-                size_t edge_node_A_id =  std::stoul (nodes[0],nullptr,0);
-                size_t edge_node_B_id =  std::stoul (nodes[1],nullptr,0);
-                refine_one_to_two( tet_id, edge_node_A_id, edge_node_B_id);
-            }
-
-            /**
+            /*
              * @brief Refine a given tet id into 2 children.
              * NOTE: Does not do any validity checking (currently?)
              *
@@ -116,16 +105,7 @@ namespace AMR {
 
                 if (!check_allowed_refinement(tet_id)) return;
 
-                trace_out << "Refining tet_id " << tet_id << " 1:2 along edge "
-                    << edge_node_A_id << " - " << edge_node_B_id << std::endl;
-
-                //coordinate_t original_tet_c = node_connectivity->id_to_coordinate(id);
-
                 tet_t original_tet = tet_store->get(tet_id);
-
-                // Find midpoint of the edge_id, and make a new node.
-                //coordinate_t mid_point =
-                    //AMR::util::find_mid_point( edge_node_A, edge_node_B);
 
                 size_t new_node_id = node_connectivity->add( edge_node_A_id, edge_node_B_id );
 
@@ -141,15 +121,13 @@ namespace AMR {
                 copy_tet(&new_tet1, &original_tet);
 
                 // Replace all node ids in tet that were pointing to A with new_node_id
-                std::replace(new_tet1.begin(), new_tet1.end(), edge_node_A_id,
-                        new_node_id);
+                replace_node(&new_tet1, edge_node_A_id, new_node_id);
 
                 // Create a new tet that is based on the original
                 copy_tet(&new_tet2, &original_tet);
 
                 // Replace all node ids in tet that were pointing to B with new_node_id
-                std::replace(new_tet2.begin(), new_tet2.end(), edge_node_B_id,
-                        new_node_id);
+                replace_node(&new_tet2, edge_node_B_id, new_node_id);
 
                 // Now, update the edge list
 
@@ -201,7 +179,7 @@ namespace AMR {
             */
             void refine_one_to_four(size_t tet_id)
             {
-                bool face_refine = false;
+                //bool face_refine = false;
                 size_t face_refine_id = 0; // FIXME: Does this need a better default
                 face_list_t face_list = tet_store->generate_face_lists(tet_id);
 
@@ -211,11 +189,6 @@ namespace AMR {
                     int num_face_refine_edges = 0;
 
                     face_ids_t face_ids = face_list[face];
-                    trace_out << "face ids " <<
-                        face_ids[0] << ", " <<
-                        face_ids[1] << ", " <<
-                        face_ids[2] << ", " <<
-                        std::endl;
 
                     edge_list_t face_edge_list = AMR::edge_store_t::generate_keys_from_face_ids(face_ids);
                     // For this face list, see which ones need refining
@@ -238,26 +211,14 @@ namespace AMR {
                     }
                     if (num_face_refine_edges >= 2)
                     {
-                        assert(num_face_refine_edges < 4);
-                        face_refine = true;
                         face_refine_id = face;
                         break;
                     }
                 }
 
-                assert(face_refine);
-
                 tet_t tet = tet_store->get(tet_id);
                 size_t opposite_offset = AMR::node_connectivity_t::face_list_opposite(face_list, face_refine_id);
                 size_t opposite_id = tet[opposite_offset];
-
-                trace_out << "1:4 tet mark id " << tet_id << std::endl;
-                trace_out << "opposite offset " << opposite_offset << std::endl;
-                trace_out << "opposite id " << opposite_id << std::endl;
-                trace_out << "face refine id " << face_refine_id << std::endl;
-                trace_out << "face list 0 " << face_list[face_refine_id][0] << std::endl;
-                trace_out << "face list 1 " << face_list[face_refine_id][1] << std::endl;
-                trace_out << "face list 2 " << face_list[face_refine_id][2] << std::endl;
 
                 refine_one_to_four(tet_id, face_list[face_refine_id], opposite_id);
             }
@@ -279,23 +240,6 @@ namespace AMR {
             {
 
                 if (!check_allowed_refinement(tet_id)) return;
-
-                trace_out << "Refining tet_id " << tet_id <<
-                    " 1:4 opposite edge " << opposite_id << std::endl;
-
-                tet_t t = tet_store->get(tet_id);
-                trace_out  << "Tet has nodes " <<
-                    t[0] << ", " <<
-                    t[1] << ", " <<
-                    t[2] << ", " <<
-                    t[3] << ", " <<
-                    std::endl;
-
-                trace_out << "face_ids " <<
-                    face_ids[0] << ", " <<
-                    face_ids[1] << ", " <<
-                    face_ids[2] << ", " <<
-                    std::endl;
 
                 size_t A = face_ids[0];
                 size_t B = face_ids[1];
@@ -384,18 +328,12 @@ namespace AMR {
                 // The loop would just be i=0..4, j=i..4
                 //
 
-
-                trace_out << "Refining " << tet_id << " 1:8 " << std::endl;
-
                 tet_t tet = tet_store->get(tet_id);
 
                 size_t A = tet[0];
                 size_t B = tet[1];
                 size_t C = tet[2];
                 size_t D = tet[3];
-
-                trace_out << "A " << A << " B " << B << " C " << C << " D " << D
-                    << std::endl;
 
                 // Generate pairs of nodes (i.e edges)
                 // Hard coding for now, can swap out for loop
@@ -494,6 +432,7 @@ namespace AMR {
              * @param out The tet to store the copy
              * @param original The tet to copy the data from
              */
+            // TODO: Is it better to rely on the copy constructor
             void copy_tet(tet_t* out, tet_t* original)
             {
                 // NOTE: This will do a deep copy, so is safer than it may look
@@ -527,8 +466,8 @@ namespace AMR {
              *
              * @return tet into data arrays the tet lives
              */
-            // TODO: Move this (or rename?)
             size_t tet_id_to_node_id(size_t tet, size_t element) {
+                Assert( element < NUM_TET_NODES, "Indexing greater than tet bounds");
                 return tet_store->get(tet)[element];
             }
 
@@ -545,7 +484,7 @@ namespace AMR {
             node_pair_t find_single_refinement_nodes(edge_list_t edge_list)
             {
                 node_pair_t returned_nodes;
-                bool found_break = false;
+                //bool found_break = false;
                 for (size_t k = 0; k < NUM_TET_EDGES; k++)
                 {
                     edge_t edge = edge_list[k];
@@ -555,16 +494,11 @@ namespace AMR {
                         returned_nodes[0] = edge.first();
                         returned_nodes[1] = edge.second();
 
-                        trace_out << "1:2 needs to be split on " <<
-                            returned_nodes[0] << " and " <<
-                            returned_nodes[1] << std::endl;
-
-                        found_break = true;
                         break;
                     }
                 }
 
-                assert(found_break);
+                //(found_break);
 
                 return returned_nodes;
             }
@@ -577,7 +511,6 @@ namespace AMR {
             {
                 // Iterate over edges of of tet
                 edge_list_t edge_list = tet_store->generate_edge_keys(tet_id);
-                trace_out << "edges:" << std::endl;
                 for (size_t k = 0; k < NUM_TET_EDGES; k++)
                 {
                     // If it contains that node id, mark it using lock_case
@@ -587,7 +520,7 @@ namespace AMR {
                     size_t edge_node_B_id = edge.second();
 
                     if ((edge_node_A_id == node_id) || (edge_node_B_id == node_id)) {
-                        tet_store->edge_store.get(edge).lockCase = lock_case;
+                        tet_store->edge_store.get(edge).lock_case = lock_case;
                     }
                 }
             }
@@ -605,8 +538,6 @@ namespace AMR {
                 Refinement_State& parent = tet_store->data(parent_id);
                 for (auto c : parent.children)
                 {
-                    trace_out << "Derefine child " << c << std::endl;
-
                     tet_store->erase(c);
                     parent.num_children--; // Could directly set to 0
                 }
@@ -656,23 +587,26 @@ namespace AMR {
                 }
             }
 
+            /* Not currently used..
+            // TODO: Re-enable this
             // TODO: Document This.
             void derefine_four_to_two(size_t parent_id)
             {
-                assert(0);
+                Assert(0);
             }
 
             // TODO: Document This.
             void derefine_eight_to_two(size_t parent_id)
             {
-                assert(0);
+                Assert(0);
             }
 
             // TODO: Document This.
             void derefine_eight_to_four(size_t parent_id)
             {
-                assert(0);
+                Assert(0);
             }
+            */
 
             /**
              * @brief Loop over children and delete all intermediate edges
@@ -688,7 +622,13 @@ namespace AMR {
                 }
             }
 
-            // TODO: Document this
+            /**
+             * @brief Function to delete all intermediate edges for a given
+             * tet_id. Useful for de-refining, as they're the edges which were
+             * added
+             *
+             * @param tet_id ID of the tet for which we will delete intermediates
+             */
             void delete_intermediates(size_t tet_id)
             {
                 edge_list_t edge_list = tet_store->generate_edge_keys(tet_id);
@@ -697,7 +637,7 @@ namespace AMR {
                     edge_t edge = edge_list[k];
                     // accept this code may try delete an edge which has already gone
                     if (tet_store->edge_store.exists(edge)) {
-                        if (tet_store->edge_store.get(edge).lockCase == Edge_Lock_Case::intermediate)
+                        if (tet_store->edge_store.get(edge).lock_case == Edge_Lock_Case::intermediate)
                         {
                             tet_store->edge_store.erase(edge);
                         }
@@ -714,10 +654,6 @@ namespace AMR {
              */
             void delete_non_matching_edges(edge_list_t candidate, edge_list_t basis)
             {
-                trace_out << "Looking for edges to delete" << std::endl;
-
-                // TODO: Sanity check this now we changed to edge_t
-
                 // Loop over the edges in each child. Look over the basis and
                 // if we can't find it, delete it
                 for (size_t k = 0; k < NUM_TET_EDGES; k++)

@@ -8,7 +8,7 @@
 #include <vector>
 #include <cstddef>
 
-#include "types.h"
+#include "AMR_types.h"
 
 namespace AMR {
     // Types
@@ -18,10 +18,10 @@ namespace AMR {
     const size_t DEFAULT_NUM_CHILDREN = 0; // Default to no children
 
     // TODO: Populate this enum with the available refinement cases
-    enum Refinement_Case { initial_grid, one_to_two, one_to_four, one_to_eight,
+    enum class Refinement_Case { initial_grid, one_to_two, one_to_four, one_to_eight,
         two_to_eight, four_to_eight, none };
 
-    enum Edge_Lock_Case {unlocked, locked, intermediate, temporary};
+    enum class Edge_Lock_Case {unlocked, locked, intermediate, temporary};
 
     struct Edge_Refinement {
         size_t A;
@@ -30,28 +30,16 @@ namespace AMR {
         bool needs_refining; // TODO: This could possibly be deduced implicitly
         bool needs_derefining; // TODO: Marge this with needs_refining
         bool is_dead;
-        Edge_Lock_Case lockCase; // TODO: Refactor this to match _ style?
+        Edge_Lock_Case lock_case;
 
-        // Explicit Empty Constructor
-        Edge_Refinement() {
-            A = 0;
-            B = 0;
-            refinement_criteria = 0.0;
-            needs_refining = false;
-            needs_derefining = false;
-            is_dead = false;
-            lockCase = Edge_Lock_Case::unlocked;
-        }
-
-        // Explicit copy Constructor
-        Edge_Refinement(const Edge_Refinement& a) :
-            A(a.A),
-            B(a.B),
-            refinement_criteria(a.refinement_criteria),
-            needs_refining(a.needs_refining),
-            needs_derefining(a.needs_derefining),
-            is_dead(a.is_dead),
-            lockCase(a.lockCase)
+        Edge_Refinement() :
+            A(0),
+            B(0),
+            refinement_criteria(0.0),
+            needs_refining(false),
+            needs_derefining(false),
+            is_dead(false),
+            lock_case(Edge_Lock_Case::unlocked)
         {
             // Empty
         }
@@ -65,15 +53,15 @@ namespace AMR {
                 bool needs_refining_in,
                 bool needs_derefining_in,
                 bool is_dead_in,
-                Edge_Lock_Case lockCase_in
-                ) :
+                Edge_Lock_Case lock_case_in
+        ) :
             A(A_in),
             B(B_in),
             refinement_criteria(refinement_criteria_in),
             needs_refining(needs_refining_in),
             needs_derefining(needs_derefining_in),
             is_dead(is_dead_in),
-            lockCase(lockCase_in)
+            lock_case(lock_case_in)
         {
             // Empty, all implicit.
             // Could add logic here to reconcile needs_refining and needs_derefining
@@ -81,9 +69,8 @@ namespace AMR {
     };
 
     //stop it being copied around?
-
-    class Refinement_State {
-
+    class Refinement_State
+    {
         public:
 
             /// Common to active and master elements
@@ -94,14 +81,6 @@ namespace AMR {
             size_t refinement_level;
             size_t child_number;
             size_t parent_id;
-
-            // Only needed for active
-            size_t master_element_number; // TODO: Some of these can be removed?
-
-            // Constructor
-            Refinement_State() {
-                // Empty
-            }
 
             /**
              * @brief Constructor which allows for all data fields to be explicitly
