@@ -83,6 +83,9 @@ Partitioner::Partitioner( const std::vector< CkCallback >& cb,
     computeCentroids( er );
   else
     contribute( m_cb.get< tag::part >() );
+
+  // Init common AMR object
+  mesh_adapter = new AMR::mesh_adapter_t();
 }
 
 void
@@ -850,12 +853,8 @@ Partitioner::refine()
 //  Uniformly refine our mesh replacing each tetrahedron with 8 new ones
 // *****************************************************************************
 {
-  generate_compact_inpoel();
-
-  // Create AMR object
-  AMR::mesh_adapter_t* mesh_adapter = new AMR::mesh_adapter_t();
-
   // Generate unique edges (nodes connected to nodes)?
+  generate_compact_inpoel();
 
   // shift to zero-based node IDs
   // Find min/max to shift
@@ -956,8 +955,6 @@ Partitioner::refine()
   }
 
   generate_compact_inpoel();
-
-  delete mesh_adapter;
 
   // TODO: This only needs to have set en? Which is m_chedgenodes.
 }
@@ -1202,15 +1199,7 @@ Partitioner::createDiscWorkers()
 // *****************************************************************************
 {
 
-    // TODO: this can be removed once AMR is enabled
-    // Build AMR object from current state:
-    //
-    // TODO: Right now we have two mesh objects (one other in refine). Not a good idea.
-    // TODO: Make unique instead of new?
-    AMR::mesh_adapter_t* mesh_adapter = new AMR::mesh_adapter_t();
-
-    // TODO: Check the size of this right
-    mesh_adapter->init(m_tetinpoel, m_tetinpoel.size() );
+    std::cout << "Disc Workers" << std::endl;
 
     tk::ExodusIIMeshReader
         er( g_inputdeck.get< tag::cmd, tag::io, tag::input >() );
@@ -1235,11 +1224,16 @@ Partitioner::createDiscWorkers()
 
     size_t graph_size = x.size();
 
+    // TODO: We need to move the coord reading bit to be earlier
+
+    // TODO: need a map to go from AMR ID to global ID
+    // TODO: This is kind of cheating, as it just passes the data back in
+    // TODO: Is there a way to be certain that the data lines up?
     mesh_adapter->init_node_store(
             &x,
             &y,
             &z,
-            graph_size
+            graph_size // TODO: Tis is going to be wrong if there was refinement
     );
 
     // Categorize by coord
@@ -1282,9 +1276,6 @@ Partitioner::createDiscWorkers()
                 int store_id = n->second; //n->first;
 
                 // global id => {x,y,z}
-                // TODO: This id is out of the range of the small node store (which uses local ids)
-                // TODO: Figure out what is global id and what is not
-                //std::cout << "find coord " << read_id << std::endl;
                 const auto& coord = mesh_adapter->node_store.get(read_id);
 
                 // global id

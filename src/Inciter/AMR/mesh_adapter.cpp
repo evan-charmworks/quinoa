@@ -18,6 +18,13 @@ namespace AMR {
 
     void mesh_adapter_t::init(std::vector<size_t> m_tetinpoel, size_t num_nodes) 
     {
+        std::cout << "AMR Init" << std::endl;
+        // It doesn't make sense to do this twice, so lets catch that
+        if (refiner != nullptr) {
+            std::cerr << "Mesh adapter is already initialized" << std::endl;
+        }
+        Assert(refiner == nullptr);
+
         node_connectivity.fill_initial_nodes(num_nodes);
 
         refiner = new AMR::refinement_t(&tet_store, &node_connectivity);
