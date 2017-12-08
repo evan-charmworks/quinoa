@@ -44,12 +44,12 @@ namespace AMR {
          *
          * @return  The mid point between the two nodes
          */
-        coord_t find_mid_point(
-                coord_t edge_node_A,
-                coord_t edge_node_B
+        coordinate_t find_mid_point(
+                coordinate_t edge_node_A,
+                coordinate_t edge_node_B
                 )
         {
-            coord_t mid_point;
+            coordinate_t mid_point;
 
             for(size_t i = 0; i < DIMENSION; i++)
             {
@@ -71,11 +71,11 @@ namespace AMR {
          *
          * @return The mid point between the two nodes
          */
-        coord_t find_mid_point(real_t x1, real_t y1,
+        coordinate_t find_mid_point(real_t x1, real_t y1,
                 real_t z1, real_t x2, real_t y2, real_t z2)
         {
 
-            coord_t mid_point;
+            coordinate_t mid_point;
 
             mid_point[0] = (x1+x2)/2.0;
             mid_point[1] = (y1+y2)/2.0;

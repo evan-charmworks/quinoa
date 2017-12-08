@@ -1224,7 +1224,8 @@ Partitioner::createDiscWorkers()
 
     size_t graph_size = x.size();
 
-    // TODO: We need to move the coord reading bit to be earlier
+    // TODO: We need to move the coord reading bit to be earlier so it can track new nodes
+    // TODO: How does this have coords for new nodes?
 
     // TODO: need a map to go from AMR ID to global ID
     // TODO: This is kind of cheating, as it just passes the data back in
