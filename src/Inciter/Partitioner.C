@@ -1294,6 +1294,7 @@ Partitioner::createDiscWorkers()
 
     auto dist = chareDistribution();
 
+    // TODO: should this loop be merged with above?
     for (int c=0; c<dist[1]; ++c)
     {
         // Compute chare ID
