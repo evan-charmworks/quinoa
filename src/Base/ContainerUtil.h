@@ -51,7 +51,6 @@ auto cref_find( const Container& map, const typename Container::key_type& key )
       return it->second;
   }
   else {
-      std::cout << key << std::endl;
       Throw( "Can't find key" );
   }
 }
