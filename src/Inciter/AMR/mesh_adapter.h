@@ -38,6 +38,9 @@ namespace AMR {
 
             void consume_tets(const std::vector<std::size_t>& tetinpoel );
 
+            std::vector< std::size_t >& get_active_inpoel();
+            std::vector< std::size_t >& get_active_id_mapping();
+
             void evaluate_error_estimate();
             void uniform_refinement();
 

@@ -54,6 +54,18 @@ namespace AMR {
         }
     }
 
+    // TODO: Tidy the return type of this to avoid duplication
+    std::vector< std::size_t >& mesh_adapter_t::get_active_inpoel()
+    {
+        return tet_store.get_active_inpoel();
+    }
+
+    std::vector< std::size_t >& mesh_adapter_t::get_active_id_mapping()
+    {
+        return tet_store.get_active_id_mapping();
+    }
+
+
     /**
      * @brief Place holder function to evaluate error estimate at
      * nodes, and therefor mark things as needing to be refined

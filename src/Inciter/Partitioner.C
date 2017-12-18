@@ -938,6 +938,7 @@ Partitioner::refine()
           */
 
           // TODO: We should likely check the return values here
+          // TODO: This is hard coded 1:8
           const int AB = mesh_adapter->node_connectivity.find(A, B);
           const int AC = mesh_adapter->node_connectivity.find(A, C);
           const int AD = mesh_adapter->node_connectivity.find(A, D);
@@ -1002,7 +1003,7 @@ Partitioner::reordered()
     decltype(m_chinpoel) refinpoel;
 
 
-    // TODO: This will be replacd by the AMR lib
+    // TODO: This will be replaced by the AMR lib
     for (const auto& chi : m_chinpoel) {
       auto& ri = refinpoel[ chi.first ];
       const auto& edgenodes = tk::cref_find( m_chedgenodes, chi.first );
