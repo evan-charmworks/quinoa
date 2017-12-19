@@ -127,7 +127,7 @@ Discretization::Discretization(
       auto n = m_filenodes.find(p);
       if (n != end(m_filenodes) && n->second < nnode)
       {
-          int find_id = n->second;
+          auto find_id = n->second;
           const auto& this_coord = tk::cref_find(coords, find_id);
 
           auto local_id = tk::cref_find(m_lid,p);
