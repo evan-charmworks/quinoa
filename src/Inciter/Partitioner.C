@@ -1274,8 +1274,8 @@ Partitioner::createDiscWorkers()
                 // n->first picks up wrong coords but "works" to the end
                 // n->second looks for really big coords, not sure why
                 //int read_id = n->first;
-                int read_id = n->second; //n->first;
-                int store_id = n->second; //n->first;
+                size_t read_id = n->second; //n->first;
+                size_t store_id = n->second; //n->first;
 
                 // global id => {x,y,z}
                 const auto& coord = mesh_adapter->node_store.get(read_id);
