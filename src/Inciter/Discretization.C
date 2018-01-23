@@ -171,7 +171,7 @@ Discretization::coord()
   // Add coordinates of mesh nodes newly generated to edge-mid points during
   // initial refinement
   // TODO: Is this still valid for AMR tests given the changes we've made?
-  addEdgeNodeCoords();
+  addEdgeNodeCoords(); // TODO: when we stop passing edge nodes, this should go away
   // Compute mesh cell volumes
   vol();
 }

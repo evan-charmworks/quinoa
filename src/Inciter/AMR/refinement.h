@@ -5,7 +5,7 @@
 
 #include "Base/Exception.h"
 #include "tet_store.h"
-#include "node_connectivity.h"
+#include "node_store.h"
 
 // TODO: make this have a base class to support multiple generator schemes
 // using the policy design pattern
@@ -20,13 +20,13 @@ namespace AMR {
 
             // TODO: Tidy up edge store references here
             tet_store_t* tet_store;
-            node_connectivity_t* node_connectivity;
+            node_store_t* node_store;
 
         public:
 
             const size_t MAX_REFINEMENT_LEVEL = 4;
 
-            refinement_t(tet_store_t* ts, node_connectivity_t* ns) : tet_store(ts), node_connectivity(ns)
+            refinement_t(tet_store_t* ts, node_store_t* ns) : tet_store(ts), node_store(ns)
             {
             }
 
@@ -107,7 +107,7 @@ namespace AMR {
 
                 tet_t original_tet = tet_store->get(tet_id);
 
-                size_t new_node_id = node_connectivity->add( edge_node_A_id, edge_node_B_id );
+                size_t new_node_id = node_store->add( edge_node_A_id, edge_node_B_id );
 
                 /// Split existing tet into two new tets
 
@@ -217,7 +217,7 @@ namespace AMR {
                 }
 
                 tet_t tet = tet_store->get(tet_id);
-                size_t opposite_offset = AMR::node_connectivity_t::face_list_opposite(face_list, face_refine_id);
+                size_t opposite_offset = AMR::node_store_t::face_list_opposite(face_list, face_refine_id);
                 size_t opposite_id = tet[opposite_offset];
 
                 refine_one_to_four(tet_id, face_list[face_refine_id], opposite_id);
@@ -254,14 +254,14 @@ namespace AMR {
                     std::endl;
 
                 // Make new nodes
-                //coordinate_t AB_mid = node_connectivity->find_mid_point(A, B);
-                size_t AB = node_connectivity->add(A,B);
+                //coordinate_t AB_mid = node_store->find_mid_point(A, B);
+                size_t AB = node_store->add(A,B);
 
-                //coordinate_t AC_mid = node_connectivity->find_mid_point(A, C);
-                size_t AC = node_connectivity->add(A,C);
+                //coordinate_t AC_mid = node_store->find_mid_point(A, C);
+                size_t AC = node_store->add(A,C);
 
-                //coordinate_t BC_mid = node_connectivity->find_mid_point(B, C);
-                size_t BC = node_connectivity->add(B,C);
+                //coordinate_t BC_mid = node_store->find_mid_point(B, C);
+                size_t BC = node_store->add(B,C);
 
                 // Use nodes to update edges
                 // All added edges will be locked due to containing intermediate points
@@ -337,23 +337,23 @@ namespace AMR {
 
                 // Generate pairs of nodes (i.e edges)
                 // Hard coding for now, can swap out for loop
-                //coordinate_t AB_mid = node_connectivity->find_mid_point(A,B);
-                size_t AB = node_connectivity->add(A,B);
+                //coordinate_t AB_mid = node_store->find_mid_point(A,B);
+                size_t AB = node_store->add(A,B);
 
-                //coordinate_t AC_mid = node_connectivity->find_mid_point(A,C);
-                size_t AC = node_connectivity->add(A,C);
+                //coordinate_t AC_mid = node_store->find_mid_point(A,C);
+                size_t AC = node_store->add(A,C);
 
-                //coordinate_t AD_mid = node_connectivity->find_mid_point(A,D);
-                size_t AD = node_connectivity->add(A,D);
+                //coordinate_t AD_mid = node_store->find_mid_point(A,D);
+                size_t AD = node_store->add(A,D);
 
-                //coordinate_t BC_mid = node_connectivity->find_mid_point(B,C);
-                size_t BC = node_connectivity->add(B,C);
+                //coordinate_t BC_mid = node_store->find_mid_point(B,C);
+                size_t BC = node_store->add(B,C);
 
-                //coordinate_t BD_mid = node_connectivity->find_mid_point(B,D);
-                size_t BD = node_connectivity->add(B,D);
+                //coordinate_t BD_mid = node_store->find_mid_point(B,D);
+                size_t BD = node_store->add(B,D);
 
-                //coordinate_t CD_mid = node_connectivity->find_mid_point(C,D);
-                size_t CD = node_connectivity->add(C,D);
+                //coordinate_t CD_mid = node_store->find_mid_point(C,D);
+                size_t CD = node_store->add(C,D);
 
                 // Update edges
 

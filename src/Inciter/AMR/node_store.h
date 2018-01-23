@@ -1,246 +1,184 @@
-#ifndef AMR_node_store_h
-#define AMR_node_store_h
+#ifndef AMR_node_connectivity_h
+#define AMR_node_connectivity_h
 
-#include <cmath>
-
+#include <vector>
 #include "Base/Exception.h"
-#include "AMR_types.h"
-#include "tet_store.h"
+#include "node_coordinates.h"
 
-// TODO: make this have a base class to support multiple generator schemes
-// using the policy design pattern
 namespace AMR {
 
-    class node_store_t
-    {
+    /**
+     * @brief This class stores the connectivity of the node. Simply what this
+     * means is that it just a vector of node ids. The value of the vector is
+     * the two nodes the new node joins, and the index is the node id
+     */
+    class node_store_t {
 
         private:
-            coord_type* m_x;
-            coord_type* m_y;
-            coord_type* m_z;
-
-            // We really don't want people to pass this by value..
-            // (Because we store refs in here, which are consts..)
-            // NonCopyable & operator=(const NonCopyable&) = delete;
-            node_store_t(const node_store_t& c) = delete;
-            node_store_t& operator=(const node_store_t&) = delete;
+            std::vector<node_pair_t> nodes;
+            node_coordinates_t coordinates;
 
         public:
-            // TODO: This needs to set the member variables
-            node_store_t() { } // default cons
-
-            size_t m_graphsize;
-
-            void set_x(coord_type* x_in) { m_x = x_in; }
-            void set_y(coord_type* y_in) { m_y = y_in; }
-            void set_z(coord_type* z_in) { m_z = z_in; }
+            // Pass through functions to coordinates
+            coord_type* get_x_array() { return coordinates.get_x_array(); }
+            coord_type* get_y_array() { return coordinates.get_y_array(); }
+            coord_type* get_z_array() { return coordinates.get_z_array(); }
 
             /**
-             * @brief Function to add x coordinate data
+             * @brief Function to enable the tracking of node coordinateds. Must be
+             * called after node_store is inited (by mesh_adapter.init())
              *
-             * @param xc Data to add
+             * @param x Array of initial x coords
+             * @param y Array of initial y coords
+             * @param z Array of initial z coords
+             * @param graph_size Number of nodes
+             * // TODO: this can be deduced from size of x/y/z?
              */
-            void add_x(real_t xc) { m_x->push_back(xc); }
+            void init_coordinates(coord_type* x, coord_type* y, coord_type* z, size_t graph_size)
+            {
+                coordinates.init(x, y, z, graph_size);
+            }
+
 
             /**
-             * @brief Function to add y coordinate data
+             * @brief Method to add initial nodes to the store
              *
-             * @param yc Data to add
+             * @param initial_size Size of the list to fill to
              */
-            void add_y(real_t yc) { m_y->push_back(yc); }
+            void fill_initial_nodes(size_t initial_size)
+            {
+                for (size_t i = 0; i < initial_size; i++)
+                {
+                    // These can initially be 0 as initial nodes don't join any
+                    // two others.. this could be updated to track
+                    // intermediates, but this currently tracks "added" nodes
+                    // nicely
+                    add(0,0);
+                }
+            }
 
             /**
-             * @brief Function to add z coordinate data
+             * @brief Return size of node container -- the number of nodes
              *
-             * @param zc data to add
+             * @return Number of nodes
              */
-            void add_z(real_t zc) { m_z->push_back(zc); }
-            real_t x(size_t id)
-            {
-                return (*m_x)[id];
-            }
-            real_t y(size_t id)
-            {
-                return (*m_y)[id];
-            }
-            real_t z(size_t id)
-            {
-                return (*m_z)[id];
-            }
-
             size_t size()
             {
-                return m_x->size();
+                return nodes.size();
+            }
+
+            /**
+             * @brief Getter into node storage
+             *
+             * @param id Id of the node to get
+             *
+             * @return The node_pair at the given id
+             */
+            node_pair_t get(size_t id)
+            {
+                return nodes.at(id);
+            }
+
+            /**
+             * @brief function to calculate which node is opposite a
+             * tet face
+             *
+             * @param face_list A list of faces on the tet
+             * @param opposite_index The index for the face you want to know
+             * the opposite node for
+             *
+             * @return An index (0-3) to tell you if A, B, C, or D
+             * (respectively) is opposite the given face_list_t
+             *
+             * This function is tightly coupled (too coupled) to generate_face_lists
+             *
+             * generate_face_lists generates the faces {ABC, ABD, ACD, BCD} in
+             * a fixed order. Opposite_index says the face from a face list we
+             * care about. This function returns a number in the range {0,3} to
+             * tell you  which node is missing from that face.
+             *
+             * I.e If opposite_index is 1, Node C is missing => 2.
+             */
+            static size_t face_list_opposite(face_list_t face_list, size_t opposite_index)
+            {
+                // TODO: make this actually inspect the face_list and be much
+                // more robust...
+                // TODO: Remove this hack to supress warning
+                size_t result = face_list[0][0];
+                switch(opposite_index)
+                {
+                    case 0:  // ABC
+                        result = 3;
+                        break;
+                    case 1:  // ABD
+                        result = 2;
+                        break;
+                    case 2:  // ACD
+                        result = 1;
+                        break;
+                    case 3:  // BCD
+                        result = 0;
+                        break;
+                    default: // something went horribly wrong..
+                        Assert(0, "Invalid Opposite Index");
+                        break;
+                }
+
+                return result;
             }
 
             // TODO: Document this
-            void print()
+            // Int because it's signed.. is this a good idea?
+            int find(size_t A, size_t B)
             {
+                size_t min = std::min(A,B);
+                size_t max = std::max(A,B);
+
                 for (size_t i = 0; i < size(); i++)
                 {
-                    std::cout << "Node " << i << " has coords :" <<
-                        x(i) << ", " <<
-                        y(i) << ", " <<
-                        z(i) << ", " <<
-                        std::endl;
-               }
-            }
-
-
-            /**
-             * @brief Function to add a new node
-             *
-             * @param xc x val of node
-             * @param yc y val of node
-             * @param zc z val of node
-             *
-             * @return id of node added
-             */
-            size_t add(real_t xc, real_t yc, real_t zc) {
-
-                // Need to: Add to {xc,yc,zc} Add any connectivity?
-
-                // Check if the node already exists
-                int already_exists = check_node_exists(xc,yc,zc);
-
-                if (already_exists == -1) {
-                    size_t return_node_id = add_coordinates(xc,yc,zc);
-                    m_graphsize++; // TODO: how best to deal with this?
-                    return return_node_id;
-                }
-                else {
-                    return static_cast<size_t>(already_exists);
-                }
-
-            }
-
-            /**
-             * @brief Function to add a new node
-             *
-             * @param coord_tuple The coordinate data to add for the node
-             *
-             * @return Id of node added
-             */
-            size_t add(coordinate_t coord_tuple)
-            {
-                return add( coord_tuple[0], coord_tuple[1], coord_tuple[2]);
-            }
-
-            /**
-             * @brief Function to add a new point/coordinates
-             *
-             * @param xc x val
-             * @param yc y val
-             * @param zc z val
-             *
-             * @return id of coordinate added
-             */
-            size_t add_coordinates(real_t xc, real_t yc, real_t zc) {
-                add_x(xc);
-                add_y(yc);
-                add_z(zc);
-                return size()-1; // -1 because of the 0 index
-            }
-
-            /**
-             * @brief Function to add a new node
-             *
-             * @param xc x val of node
-             * @param yc y val of node
-             * @param zc z val of node
-             *
-             * @return id of node added
-             */
-            size_t add_node(real_t xc, real_t yc, real_t zc) {
-
-                // Need to: Add to {xc,y,z} Add any connectivity?
-
-                // Check if the node already exists
-                int already_exists = check_node_exists(xc,yc,zc);
-
-                if (already_exists == -1) {
-                    size_t return_node_id = add_coordinates(xc,yc,zc);
-                    m_graphsize++; // TODO: how to deal with this?
-                    return return_node_id;
-                }
-                else {
-                    return static_cast<size_t>(already_exists);
-                }
-
-            }
-
-            // TODO: Remove all calls to this as it's fairly expensive...
-            // TODO: Find a more cost effective way to implement this
-                // Most likely change data structure for a faster search
-                // This is also going to be a potential problem in async parallel
-            /**
-             * @brief Helper function to check if a node already exists at
-             * coords {x,y,z} to avoid it being duplicated
-             *
-             * @param x_in X coord to check
-             * @param y_in Y coord to check
-             * @param z_in Z coord to check
-             *
-             * @return The id of the node if it exists, -1 if it doesn't.
-             */
-            int check_node_exists(real_t x_in, real_t y_in, real_t z_in)
-            {
-                const real_t eps = 1e-7;
-                for (size_t i = 0; i < size(); i++)
-                {
-                    if (
-                        std::abs( x(i) - x_in) < eps &&
-                        std::abs( y(i) - y_in) < eps &&
-                        std::abs( z(i) - z_in) < eps
-                    )
+                    // Did we find it?
+                    node_pair_t n = get(i);
+                    if (min == n[0] && max == n[1])
                     {
                         return static_cast<int>(i);
                     }
                 }
-
                 return -1;
             }
 
-            /**
-             * @brief function to find the mid point between two points (nodes)
-             * based on ids
-             *
-             * @param id1 id of the first node/point
-             * @param id2 id of the second node/point
-             *
-             * @return The mid point
-             */
-            coordinate_t find_mid_point(size_t id1, size_t id2)
+            // TODO: Document this
+            size_t add(size_t A, size_t B)
             {
-                coordinate_t edge_node_A = id_to_coordinate(id1);
-                coordinate_t edge_node_B = id_to_coordinate(id2);
-                return AMR::util::find_mid_point(edge_node_A, edge_node_B);
+                if (A != 0 || B != 0)
+                {
+                    Assert(A != B, "Trying to add node with duplicated ID");
+                    // TODO: Abstract to exists method. (Could have one for id,
+                    // as well as one for val)
+
+                    // check if already exists
+                    int f = find(A,B);
+                    if (f != -1) {
+                        return static_cast<size_t>(f);
+                    }
+                }
+
+                nodes.push_back( {{std::min(A,B), std::max(A,B)}} );
+                return size()-1;
             }
 
             /**
-             * @brief Function to gather the {x,y,z} coordinates of a node from
-             * index id
-             *
-             * @param id Id of node to gather (direct index into m_x[])
-             *
-             * @return List (array) of coordinate data
+             * @brief Print connectivity a id: a-b
              */
-            coordinate_t id_to_coordinate(size_t id)
+            void print()
             {
-                Assert( id < size(), "Invalid ID");
-
-                // Note: extra braces are to appease Clangs warning generator.
-                //   (It's probably OK to remove them....)
-                coordinate_t c = { {x(id), y(id), z(id) } };
-                return c;
+                std::cout << "Connectivity" << std::endl;
+                for (size_t i = 0; i < size(); i ++)
+                {
+                    std::cout << i << ": A " << get(i)[0] << " B " << get(i)[1] << std::endl;
+                }
             }
 
-            coordinate_t get(size_t id)
-            {
-                return id_to_coordinate(id);
-            }
-
-    }; // end class
+    };
 }
 
-#endif  // guard
+#endif // guard

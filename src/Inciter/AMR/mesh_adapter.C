@@ -4,31 +4,35 @@
 
 namespace AMR {
 
-    void mesh_adapter_t::init_node_store(coord_type* m_x, coord_type* m_y, coord_type* m_z, size_t graph_size)
+    /**
+     * @brief Function to enable the tracking of node coordinates. Must be
+     * called after node_store is inited (by mesh_adapter.init())
+     *
+     * @param m_x Array of initial x coords
+     * @param m_y Array of initial y coords
+     * @param m_z Array of initial z coords
+     * @param graph_size Number of nodes
+     * // TODO: this can be deduced from size of x/y/z?
+     */
+    void mesh_adapter_t::init_node_coordinates(coord_type* m_x, coord_type* m_y, coord_type* m_z, size_t graph_size)
     {
-        node_store.set_x(m_x);
-        node_store.set_y(m_y);
-        node_store.set_z(m_z);
-        node_store.m_graphsize = graph_size;
+        node_store.init_coordinates(m_x, m_y, m_z, graph_size);
     }
 
-    void mesh_adapter_t::init_with_nodes(coord_type* m_x, coord_type* m_y, coord_type* m_z, size_t graph_size)
+    // TODO: Document this
+    // TODO: Check this should be *unique* nodes
+    // TODO: Dry this tetinpoel type?
+    void mesh_adapter_t::init(const std::vector<size_t>& tetinpoel, size_t num_unique_nodes)
     {
-        init_node_store(m_x, m_y, m_z, graph_size);
-        //init(); // TODO: This also needs to call init if you want node support to work
-    }
-
-    void mesh_adapter_t::init(const std::vector<size_t>& tetinpoel, size_t num_nodes)
-    {
-        std::cout << "AMR Init" << std::endl;
         // It doesn't make sense to do this twice, so lets catch that
         if (refiner != nullptr) {
             std::cerr << "Mesh adapter is already initialized" << std::endl;
         }
         Assert(refiner == nullptr, "Refiner already initialized");
-        node_connectivity.fill_initial_nodes(num_nodes);
 
-        refiner = new AMR::refinement_t(&tet_store, &node_connectivity);
+        node_store.fill_initial_nodes(num_unique_nodes);
+
+        refiner = new AMR::refinement_t(&tet_store, &node_store);
 
         consume_tets(tetinpoel);
         tet_store.generate_edges();
@@ -339,7 +343,7 @@ namespace AMR {
         //std::cout << "Total Nodes : " << m_x.size() << std::endl;
 
         tet_store.print_node_types();
-        //node_connectivity.print();
+        //node_store.print();
     }
 
     /**
@@ -401,7 +405,7 @@ namespace AMR {
             // Accept as a 1:4 // refinement"
             if (edges_on_same_face)
             {
-                //size_t opposite_offset = AMR::node_connectivity_t::face_list_opposite(face_list,
+                //size_t opposite_offset = AMR::node_store_t::face_list_opposite(face_list,
                         //face_refine_id);
 
                 //tet_t tet = tet_store.get(tet_id);

@@ -74,19 +74,95 @@ Partitioner::Partitioner( const std::vector< CkCallback >& cb,
     er( g_inputdeck.get< tag::cmd, tag::io, tag::input >() );
 
   // Read our contiguously-numbered chunk of the mesh graph from file
-  readGraph( er );
+  auto num_elem_from_file = readGraph( er );
+
+  // Init common AMR object
+  mesh_adapter = new AMR::mesh_adapter_t();
+
+
+  // Read coords from file
+
+  auto gid = m_tetinpoel;
+  tk::unique( gid );
+
+  // TODO: Is it a good idea to init it to the full file?
+  // TODO: We can also replace this with reading of the specific rows
+  auto nnode = er.readHeader();
+
+  // Set to read entire file (naive)
+  std::array< std::size_t, 2 > ext;
+  ext[0] = 0;
+  ext[1] = nnode-1;
+
+  auto file_coord = er.readNodes( ext );
+
+  auto& x = std::get< 0 >( file_coord );
+  auto& y = std::get< 1 >( file_coord );
+  auto& z = std::get< 2 >( file_coord );
+
+  size_t graph_size = x.size();
+  size_t num_unique_nodes = graph_size;
+
+  std::cout << "init Tetinpoel is " << m_tetinpoel.size() << " big " << std::endl;
+  mesh_adapter->init(m_tetinpoel, num_unique_nodes);
+
+  // TODO: We need to move the coord reading bit to be earlier so it can track new nodes
+  // TODO: How does this have coords for new nodes?
+
+  // TODO: need a map to go from AMR ID to global ID
+  // TODO: This is kind of cheating, as it just passes the data back in
+  // TODO: Is there a way to be certain that the data lines up?
+  mesh_adapter->init_node_coordinates(
+          &x,
+          &y,
+          &z,
+          num_unique_nodes // TODO: This parameter is redundant if both node store track same size
+  );
+  std::cout << "Node store size is " << mesh_adapter->node_store.size() << " x " << x.size() << std::endl;
+
+  // Optionally refine mesh if requested
+  const auto ir = g_inputdeck.get< tag::selected, tag::initialamr >();
+  if (ir == ctr::InitialAMRType::UNIFORM) refine();
+
+  // TODO: this should be getting the size from a better source
+  //auto num_elem = mesh_adapter->get_active_inpoel().size();
+
+  //auto till_from_exts = compute_from_till(num_elem);
+  //generate_g_elemid(till_from_exts[0]);
+  std::cout << "Tetinpoel is " << m_tetinpoel.size() << " big " << std::endl;
+  std::cout << "Node store size is " << mesh_adapter->node_store.size() << std::endl;
+
+  set_gelemid();
+  contribute_num_elem(num_elem_from_file);
+
+  const auto& coord_x = mesh_adapter->node_store.get_x_array();
+  const auto& coord_y = mesh_adapter->node_store.get_y_array();
+  const auto& coord_z = mesh_adapter->node_store.get_z_array();
+  const std::array<coord_type*,3> coords = {{ coord_x, coord_y, coord_z }};
 
   // If a geometric partitioner is selected, compute element centroid
   // coordinates
   const auto alg = g_inputdeck.get< tag::selected, tag::partitioner >();
   if ( tk::ctr::PartitioningAlgorithm().geometric(alg) )
-    computeCentroids( er );
+      // TODO: change params of compute centroids to pass in coords not file
+    computeCentroids( coords );
   else
     contribute( m_cb.get< tag::part >() );
 
-  // Init common AMR object
-  mesh_adapter = new AMR::mesh_adapter_t();
+  std::cout << "Tetinpoel is " << m_tetinpoel.size() << " big " << std::endl;
+  std::cout << "Node store size is " << mesh_adapter->node_store.size() << std::endl;
 }
+
+/*
+void generate_g_elemid(uint64_t from)
+{
+    //thisProxy.offset2( CkMyPe(), from );
+}
+void offset2( int p, std::size_t u) {
+  //if (p < CkMyPe()) m_start += u;
+  //if (++m_noffset == static_cast<std::size_t>(CkNumPes())) reorder();
+}
+*/
 
 void
 Partitioner::partition( int nchare )
@@ -95,20 +171,39 @@ Partitioner::partition( int nchare )
 //! \param[in] nchare Number of parts the mesh will be partitioned into
 // *****************************************************************************
 {
+  // TODO: need to update m_centroids, and stop it reading the file (and instead use the coords)
+  // TODO: update M_gelemid to have consecutive node ids
+  // TODO: added nodes need to have the same ID on all processors
   m_nchare = nchare;
   const auto alg = g_inputdeck.get< tag::selected, tag::partitioner >();
+
+  size_t num_elements = m_tetinpoel.size()/4;
+
+  set_gelemid();
+
+  /*
+  // Make fake element ids
+  std::vector< long > fake_element_ids;
+  for (size_t i = 0; i < num_elements; i++)
+  {
+      fake_element_ids.push_back(i);
+  }
+  */
+
+  // Here we pass an array of non-(globally)-unique consecutive IDs to Zoltan,
+  // and it *seems* to work.
   const auto che = tk::zoltan::geomPartMesh( alg,
                                              m_centroid,
                                              m_gelemid,
-                                             m_tetinpoel.size()/4,
+                                             num_elements,
                                              nchare );
 
   // send progress report to host
   //if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
   //  m_host.pepartitioned();
 
-  Assert( che.size() == m_gelemid.size(), "Size of ownership array does "
-          "not equal the number of mesh graph elements" );
+  //Assert( che.size() == m_gelemid.size(), "Size of ownership array does "
+          //"not equal the number of mesh graph elements" );
 
   // Construct global mesh node ids for each chare and distribute
   distribute( chareNodes(che) );
@@ -244,9 +339,6 @@ Partitioner::flatten()
 //!   longer categorized by (or associated to) chares.
 // *****************************************************************************
 {
-  // Optionally refine mesh if requested
-  const auto ir = g_inputdeck.get< tag::selected, tag::initialamr >();
-  if (ir == ctr::InitialAMRType::UNIFORM) refine();
 
   // Make sure we are not fed garbage
   Assert( m_chinpoel.size() ==
@@ -501,7 +593,7 @@ Partitioner::mask(
   }
 }
 
-void
+uint64_t
 Partitioner::readGraph( tk::ExodusIIMeshReader& er )
 // *****************************************************************************
 //  Read our contiguously-numbered chunk of the mesh graph from file
@@ -512,30 +604,49 @@ Partitioner::readGraph( tk::ExodusIIMeshReader& er )
   er.readElemBlockIDs();
   auto nel = er.nelem( tk::ExoElemType::TET );
 
+  auto till_from_exts = compute_from_till(nel);
+  auto from = till_from_exts[0];
+  auto till = till_from_exts[1];
+  std::array<size_t, 2> read_bounds = {{from, till-1}};
   // Read our contiguously-numbered chunk of tetrahedron element
   // connectivity from file and also generate and store the list of global
   // element indices for our chunk of the mesh
+  er.readElements( read_bounds, tk::ExoElemType::TET, m_tetinpoel );
+
+  return till-from;
+}
+
+std::array<uint64_t,2> Partitioner::compute_from_till(uint64_t nel)
+{
   auto npes = static_cast< std::size_t >( CkNumPes() );
   auto mype = static_cast< std::size_t >( CkMyPe() );
   auto chunk = nel / npes;
   auto from = mype * chunk;
   auto till = from + chunk;
   if (mype == npes-1) till += nel % npes;
-  er.readElements( {{from, till-1}}, tk::ExoElemType::TET, m_tetinpoel );
-  m_gelemid.resize( till-from );
-  std::iota( begin(m_gelemid), end(m_gelemid), from );
+  return { from, till };
+}
 
-  // send progress report to host
-  //if ( g_inputdeck.get< tag::cmd, tag::feedback >() )
-  //  m_host.pegraph();
+void Partitioner::set_gelemid()
+{
+    auto nelem = m_tetinpoel.size() / 4;
+    m_gelemid.resize( nelem );
 
-  uint64_t nelem = m_gelemid.size();
-  contribute( sizeof(uint64_t), &nelem, CkReduction::sum_int,
-              m_cb.get< tag::load >() );
+    // Hard code to number it from 0..n
+    int from = 0;
+    std::iota( begin(m_gelemid), end(m_gelemid), from );
+}
+
+void Partitioner::contribute_num_elem(uint64_t nelem) {
+    // TODO: Find a way to express that this data is not global elem ids..
+
+    //uint64_t nelem = m_gelemid.size();
+    contribute( sizeof(uint64_t), &nelem, CkReduction::sum_int,
+            m_cb.get< tag::load >() );
 }
 
 void
-Partitioner::computeCentroids( tk::ExodusIIMeshReader& er )
+Partitioner::computeCentroids( const std::array<coord_type*,3> coords )
 // *****************************************************************************
 //  Compute element centroid coordinates
 //! \param[in] er ExodusII mesh reader
@@ -547,10 +658,16 @@ Partitioner::computeCentroids( tk::ExodusIIMeshReader& er )
 
   // Read node coordinates of our chunk of the mesh elements from file
   auto ext = tk::extents( gid );
-  auto coord = er.readNodes( ext );
-  const auto& x = std::get< 0 >( coord );
-  const auto& y = std::get< 1 >( coord );
-  const auto& z = std::get< 2 >( coord );
+
+  // TODO: These should really be pointers, this copy is expensive and wasteful
+  // I tried making it a pointer initially but was seing a wierd charm C++ SIMD
+  // template deduction error -- hopefully J knows more about how to do this
+  // TODO-JB: can you look at this please?
+
+  const coord_type x = *(std::get< 0 >( coords ));
+  const coord_type y = *(std::get< 1 >( coords ));
+  const coord_type z = *(std::get< 2 >( coords ));
+  //TODO: is the index into this calculated properly
 
   // Make room for element centroid coordinates
   auto& cx = m_centroid[0];
@@ -853,17 +970,12 @@ Partitioner::refine()
 //  Uniformly refine our mesh replacing each tetrahedron with 8 new ones
 // *****************************************************************************
 {
-  // Generate unique edges (nodes connected to nodes)?
-  generate_compact_inpoel();
-
   // shift to zero-based node IDs
   // Find min/max to shift
-  auto minmax = std::minmax_element(begin(m_tetinpoel), end(m_tetinpoel));
+  //auto minmax = std::minmax_element(begin(m_tetinpoel), end(m_tetinpoel));
 
-  std::array<std::size_t, 2> ext{{*minmax.first, *minmax.second}};
-  auto nnode = ext[1] - ext[0] + 1;
-
-  mesh_adapter->init(m_tetinpoel, nnode);
+  //std::array<std::size_t, 2> ext{{*minmax.first, *minmax.second}};
+  //auto nnode = ext[1] - ext[0] + 1;
 
   // Do uniform refinement
   mesh_adapter->uniform_refinement();
@@ -913,6 +1025,10 @@ Partitioner::refine()
 
   tk::destroy(m_tetinpoel);
 
+  // TODO: replace the below m_chinpoel loop with this
+  m_tetinpoel = mesh_adapter->get_active_inpoel();
+
+  /*
   // Generate maps associating new node IDs (as in producing
   // contiguous-row-id linear system contributions)to edges (a pair of old
   // node IDs) in tk::UnsMesh::EdgeNodes maps, associated to and categorized
@@ -928,14 +1044,14 @@ Partitioner::refine()
           // Look up the added node IDs based on old ids {A,B}
           // (vector)
 
-          /*
+          *
              const auto AB = tk::cref_find( edgenodes, {{ A,B }} );
              const auto AC = tk::cref_find( edgenodes, {{ A,C }} );
              const auto AD = tk::cref_find( edgenodes, {{ A,D }} );
              const auto BC = tk::cref_find( edgenodes, {{ B,C }} );
              const auto BD = tk::cref_find( edgenodes, {{ B,D }} );
              const auto CD = tk::cref_find( edgenodes, {{ C,D }} );
-          */
+          /
 
           // TODO: We should likely check the return values here
           // TODO: This is hard coded 1:8
@@ -954,8 +1070,9 @@ Partitioner::refine()
           en[ {{C,D}} ] = static_cast<size_t>(CD);
       }
   }
+*/
 
-  generate_compact_inpoel();
+  //generate_compact_inpoel();
 
   // TODO: This only needs to have set en? Which is m_chedgenodes.
 }
@@ -1179,6 +1296,8 @@ Partitioner::create()
               m_cb.get< tag::avecost >() );
 
   // Create worker chare array elements
+  std::cout << "Tetinpoel is " << m_tetinpoel.size() << " big " << std::endl;
+  std::cout << "Node store size is " << mesh_adapter->node_store.size() << std::endl;
   createDiscWorkers();
 
   // Broadcast our bounds of global node IDs to all linear system solvers, if
@@ -1202,47 +1321,16 @@ Partitioner::createDiscWorkers()
 
     std::cout << "Disc Workers" << std::endl;
 
+    // TODO: We need to categorize all coords by chare id here
+    // TODO: is nnode here right?
     tk::ExodusIIMeshReader
         er( g_inputdeck.get< tag::cmd, tag::io, tag::input >() );
-
-    auto gid = m_tetinpoel;
-    tk::unique( gid );
-
-    // TODO: Is it a good idea to init it to the full file?
-    // TODO: We can also replace this with reading of the specific rows
     auto nnode = er.readHeader();
-
-    // Set to read entire file (naive)
-    std::array< std::size_t, 2 > ext;
-    ext[0] = 0;
-    ext[1] = nnode-1;
-
-    auto file_coord = er.readNodes( ext );
-
-    auto& x = std::get< 0 >( file_coord );
-    auto& y = std::get< 1 >( file_coord );
-    auto& z = std::get< 2 >( file_coord );
-
-    size_t graph_size = x.size();
-
-    // TODO: We need to move the coord reading bit to be earlier so it can track new nodes
-    // TODO: How does this have coords for new nodes?
-
-    // TODO: need a map to go from AMR ID to global ID
-    // TODO: This is kind of cheating, as it just passes the data back in
-    // TODO: Is there a way to be certain that the data lines up?
-    mesh_adapter->init_node_store(
-            &x,
-            &y,
-            &z,
-            graph_size // TODO: Tis is going to be wrong if there was refinement
-    );
 
     // Categorize by coord
     // Loop over the inpoel categorized by char
     for (const auto &c : m_chinpoel)
     {
-
         // c.second is the connectivity needed by that char
         auto connectivity = c.second;
 
@@ -1269,6 +1357,8 @@ Partitioner::createDiscWorkers()
             // TODO: this bounds check can presumably be removed
             if (n != end(l) && n->second < nnode)
             {
+                std::cout << "id " << id << std::endl;
+                std::cout << "read id " << n->second << std::endl;
 
                 // file id
                 // n->first picks up wrong coords but "works" to the end
@@ -1313,7 +1403,7 @@ Partitioner::createDiscWorkers()
                 tk::cref_find(m_chinpoel,cid),
                 msum,
                 tk::cref_find(m_chfilenodes,cid),
-                edno,
+                edno, // TODO: can this go away?
                 m_nchare,
                 tk::cref_find(m_chcoords,cid),
                 CkMyPe()

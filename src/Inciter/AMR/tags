@@ -13,7 +13,7 @@ AMR	id_generator.h	/^namespace AMR {$/;"	n
 AMR	marked_refinements_store.h	/^namespace AMR {$/;"	n
 AMR	master_element_store.h	/^namespace AMR {$/;"	n
 AMR	mesh_adapter.h	/^namespace AMR {$/;"	n
-AMR	node_connectivity.h	/^namespace AMR {$/;"	n
+AMR	node_coordinates.h	/^namespace AMR {$/;"	n
 AMR	node_store.h	/^namespace AMR {$/;"	n
 AMR	refinement.h	/^namespace AMR {$/;"	n
 AMR	tet_store.h	/^namespace AMR {$/;"	n
@@ -25,10 +25,11 @@ AMR_edge_t_h	edge.h	/^#define AMR_edge_t_h$/;"	d
 AMR_id_generator_h	id_generator.h	/^#define AMR_id_generator_h$/;"	d
 AMR_marked_refinements_store_h	marked_refinements_store.h	/^#define AMR_marked_refinements_store_h$/;"	d
 AMR_master_element_store_h	master_element_store.h	/^#define AMR_master_element_store_h$/;"	d
-AMR_node_connectivity_h	node_connectivity.h	/^#define AMR_node_connectivity_h$/;"	d
-AMR_node_store_h	node_store.h	/^#define AMR_node_store_h$/;"	d
+AMR_node_connectivity_h	node_store.h	/^#define AMR_node_connectivity_h$/;"	d
+AMR_node_coordinates_h	node_coordinates.h	/^#define AMR_node_coordinates_h$/;"	d
 AMR_refinement_h	refinement.h	/^#define AMR_refinement_h$/;"	d
 AMR_tet_store_h	tet_store.h	/^#define AMR_tet_store_h$/;"	d
+AMR_types_h	AMR_types.h	/^#define AMR_types_h$/;"	d
 AMR_types_h	types.h	/^#define AMR_types_h$/;"	d
 AMR_util_h	util.h	/^#define AMR_util_h$/;"	d
 B	Refinement_State.h	/^        size_t B;$/;"	m	struct:AMR::Edge_Refinement
@@ -36,36 +37,42 @@ DEFAULT_NUM_CHILDREN	Refinement_State.h	/^    const size_t DEFAULT_NUM_CHILDREN 
 DEFAULT_REFINEMENT_LEVEL	derefinement.h	/^            const size_t DEFAULT_REFINEMENT_LEVEL = 0; \/\/TODO: Is this in the right place?$/;"	m	class:AMR::derefinement_t
 DEFAULT_REFINEMENT_LEVEL	refinement.h	/^            const size_t DEFAULT_REFINEMENT_LEVEL = 0; \/\/TODO: Is this in the right place?$/;"	m	class:AMR::refinement_t
 DEFUALT_CHILD_NUMBER	Refinement_State.h	/^    const size_t DEFUALT_CHILD_NUMBER = 0; \/\/ Used to mark "doesn't have children"$/;"	m	namespace:AMR
+DIMENSION	AMR_types.h	/^const int DIMENSION = 3;$/;"	v
 DIMENSION	types.h	/^const int DIMENSION = 3;$/;"	v
-Edge_Lock_Case	Refinement_State.h	/^    enum Edge_Lock_Case {unlocked, locked, intermediate, temporary};$/;"	g	namespace:AMR
+Edge_Lock_Case	Refinement_State.h	/^    enum class Edge_Lock_Case {unlocked, locked, intermediate, temporary};$/;"	c	namespace:AMR
 Edge_Refinement	Refinement_State.h	/^        Edge_Refinement($/;"	f	struct:AMR::Edge_Refinement
-Edge_Refinement	Refinement_State.h	/^        Edge_Refinement() {$/;"	f	struct:AMR::Edge_Refinement
-Edge_Refinement	Refinement_State.h	/^        Edge_Refinement(const Edge_Refinement& a) :$/;"	f	struct:AMR::Edge_Refinement
+Edge_Refinement	Refinement_State.h	/^        Edge_Refinement() :$/;"	f	struct:AMR::Edge_Refinement
 Edge_Refinement	Refinement_State.h	/^    struct Edge_Refinement {$/;"	s	namespace:AMR
+ID_SHIFT	AMR_types.h	/^const size_t ID_SHIFT = 3;$/;"	v
 ID_SHIFT	types.h	/^const size_t ID_SHIFT = 3;$/;"	v
+KEY_DELIM	AMR_types.h	/^const char KEY_DELIM = '-';$/;"	v
 KEY_DELIM	types.h	/^const char KEY_DELIM = '-';$/;"	v
 Loggers_h	Loggers.h	/^#define Loggers_h$/;"	d
+MAX_CHILDREN	AMR_types.h	/^const size_t MAX_CHILDREN = 8;$/;"	v
 MAX_CHILDREN	types.h	/^const size_t MAX_CHILDREN = 8;$/;"	v
 MAX_REFINEMENT_LEVEL	refinement.h	/^            const size_t MAX_REFINEMENT_LEVEL = 4;$/;"	m	class:AMR::refinement_t
 MIN_REFINEMENT_LEVEL	derefinement.h	/^            const size_t MIN_REFINEMENT_LEVEL = DEFAULT_REFINEMENT_LEVEL;$/;"	m	class:AMR::derefinement_t
 MIN_REFINEMENT_LEVEL	refinement.h	/^            const size_t MIN_REFINEMENT_LEVEL = DEFAULT_REFINEMENT_LEVEL;$/;"	m	class:AMR::refinement_t
+NUM_FACE_NODES	AMR_types.h	/^const size_t NUM_FACE_NODES = 3;$/;"	v
 NUM_FACE_NODES	types.h	/^const size_t NUM_FACE_NODES = 3;$/;"	v
+NUM_TET_EDGES	AMR_types.h	/^const size_t NUM_TET_EDGES = 6;$/;"	v
 NUM_TET_EDGES	types.h	/^const size_t NUM_TET_EDGES = 6;$/;"	v
+NUM_TET_FACES	AMR_types.h	/^const size_t NUM_TET_FACES = 4;$/;"	v
 NUM_TET_FACES	types.h	/^const size_t NUM_TET_FACES = 4;$/;"	v
+NUM_TET_NODES	AMR_types.h	/^const size_t NUM_TET_NODES = 4;$/;"	v
 NUM_TET_NODES	types.h	/^const size_t NUM_TET_NODES = 4;$/;"	v
 QUINOA_MESH_ADAPTER_H	mesh_adapter.h	/^#define QUINOA_MESH_ADAPTER_H$/;"	d
-Refinement_Case	Refinement_State.h	/^    enum Refinement_Case { initial_grid, one_to_two, one_to_four, one_to_eight,$/;"	g	namespace:AMR
+Refinement_Case	Refinement_State.h	/^    enum class Refinement_Case { initial_grid, one_to_two, one_to_four, one_to_eight,$/;"	c	namespace:AMR
 Refinement_State	Refinement_State.h	/^            Refinement_State($/;"	f	class:AMR::Refinement_State
-Refinement_State	Refinement_State.h	/^            Refinement_State() {$/;"	f	class:AMR::Refinement_State
-Refinement_State	Refinement_State.h	/^    class Refinement_State {$/;"	c	namespace:AMR
-START_TET_ID	id_generator.h	/^            size_t START_TET_ID = 0;$/;"	m	class:AMR::id_generator_t
-START_TET_ID	id_generator.h	/^            size_t START_TET_ID = 1024;$/;"	m	class:AMR::morton_id_generator_t
+Refinement_State	Refinement_State.h	/^    class Refinement_State$/;"	c	namespace:AMR
+START_TET_ID	id_generator.h	/^            #define START_TET_ID /;"	d
 TETAMR_AMR_DATA_H	Refinement_State.h	/^#define TETAMR_AMR_DATA_H$/;"	d
 activate	tet_store.h	/^            void activate(size_t id) {$/;"	f	class:AMR::tet_store_t
 active_element_number	Refinement_State.h	/^            size_t active_element_number; \/\/ TODO: Some of these can be removed?$/;"	m	class:AMR::Refinement_State
 active_element_store_t	active_element_store.h	/^    class active_element_store_t {$/;"	c	namespace:AMR
 active_elements	active_element_store.h	/^            std::set<size_t> active_elements;$/;"	m	class:AMR::active_element_store_t
 active_elements	tet_store.h	/^            AMR::active_element_store_t active_elements;$/;"	m	class:AMR::tet_store_t
+active_id_mapping	tet_store.h	/^            std::vector< std::size_t > active_id_mapping;$/;"	m	class:AMR::tet_store_t
 active_nodes	tet_store.h	/^            std::set< std::size_t > active_nodes;$/;"	m	class:AMR::tet_store_t
 active_tetinpoel	tet_store.h	/^            std::vector< std::size_t > active_tetinpoel;$/;"	m	class:AMR::tet_store_t
 add	active_element_store.h	/^            void add(size_t id)$/;"	f	class:AMR::active_element_store_t
@@ -73,55 +80,47 @@ add	edge_store.h	/^            void add(edge_t key, Edge_Refinement e)$/;"	f	cla
 add	marked_refinements_store.h	/^            void add(size_t id, Refinement_Case r)$/;"	f	class:AMR::marked_refinements_store_t
 add	master_element_store.h	/^            size_t add$/;"	f	class:AMR::master_element_store_t
 add	master_element_store.h	/^            size_t add($/;"	f	class:AMR::master_element_store_t
-add	node_connectivity.h	/^            size_t add(size_t A, size_t B)$/;"	f	class:AMR::node_connectivity_t
-add	node_store.h	/^            size_t add(coordinate_t coord_tuple)$/;"	f	class:AMR::node_store_t
-add	node_store.h	/^            size_t add(real_t x, real_t y, real_t z) {$/;"	f	class:AMR::node_store_t
+add	node_coordinates.h	/^            size_t add(coordinate_t coord_tuple)$/;"	f	class:AMR::node_coordinates_t
+add	node_coordinates.h	/^            size_t add(real_t xc, real_t yc, real_t zc) {$/;"	f	class:AMR::node_coordinates_t
+add	node_store.h	/^            size_t add(size_t A, size_t B)$/;"	f	class:AMR::node_store_t
 add	tet_store.h	/^            void add($/;"	f	class:AMR::tet_store_t
 add	tet_store.h	/^            void add(size_t id, tet_t nodes, Refinement_Case refinement_case)$/;"	f	class:AMR::tet_store_t
 add	tet_store.h	/^            void add(tet_t nodes, Refinement_Case refinement_case)$/;"	f	class:AMR::tet_store_t
+add_between	node_coordinates.h	/^            size_t add_between(size_t A, size_t B)$/;"	f	class:AMR::node_coordinates_t
 add_center	tet_store.h	/^            void add_center(size_t id)$/;"	f	class:AMR::tet_store_t
 add_child	master_element_store.h	/^            void add_child(size_t parent_id, size_t child_id)$/;"	f	class:AMR::master_element_store_t
-add_coordinates	node_store.h	/^            size_t add_coordinates(real_t x, real_t y, real_t z) {$/;"	f	class:AMR::node_store_t
-add_node	node_store.h	/^            size_t add_node(real_t x, real_t y, real_t z) {$/;"	f	class:AMR::node_store_t
-add_x	node_store.h	/^            void add_x(real_t x) { m_x->push_back(x); }$/;"	f	class:AMR::node_store_t
-add_y	node_store.h	/^            void add_y(real_t y) { m_y->push_back(y); }$/;"	f	class:AMR::node_store_t
-add_z	node_store.h	/^            void add_z(real_t z) { m_z->push_back(z); }$/;"	f	class:AMR::node_store_t
-c	node_store.h	/^            node_store_t(const node_store_t& c) = delete;$/;"	m	class:AMR::node_store_t
+add_coordinates	node_coordinates.h	/^            size_t add_coordinates(real_t xc, real_t yc, real_t zc) {$/;"	f	class:AMR::node_coordinates_t
+add_node	node_coordinates.h	/^            size_t add_node(real_t xc, real_t yc, real_t zc) {$/;"	f	class:AMR::node_coordinates_t
+add_x	node_coordinates.h	/^            void add_x(real_t xc) { m_x->push_back(xc); }$/;"	f	class:AMR::node_coordinates_t
+add_y	node_coordinates.h	/^            void add_y(real_t yc) { m_y->push_back(yc); }$/;"	f	class:AMR::node_coordinates_t
+add_z	node_coordinates.h	/^            void add_z(real_t zc) { m_z->push_back(zc); }$/;"	f	class:AMR::node_coordinates_t
+c	node_coordinates.h	/^            node_coordinates_t(const node_coordinates_t& c) = delete;$/;"	m	class:AMR::node_coordinates_t
 cell_type_list	tet_store.h	/^            std::vector<real_t> cell_type_list;$/;"	m	class:AMR::tet_store_t
 center_tets	tet_store.h	/^            std::set<size_t> center_tets; \/\/ Store for 1:4 centers$/;"	m	class:AMR::tet_store_t
 check_allowed_derefinement	refinement.h	/^            bool check_allowed_derefinement(size_t tet_id)$/;"	f	class:AMR::refinement_t
 check_allowed_refinement	refinement.h	/^            bool check_allowed_refinement(size_t tet_id)$/;"	f	class:AMR::refinement_t
-check_node_exists	node_store.h	/^            int check_node_exists(real_t x_in, real_t y_in, real_t z_in)$/;"	f	class:AMR::node_store_t
-check_valid_refinement_case	mesh_adapter.h	/^            bool check_valid_refinement_case(size_t child_id) {$/;"	f	class:AMR::mesh_adapter_t
+check_node_exists	node_coordinates.h	/^            int check_node_exists(real_t x_in, real_t y_in, real_t z_in)$/;"	f	class:AMR::node_coordinates_t
 child_number	Refinement_State.h	/^            size_t child_number;$/;"	m	class:AMR::Refinement_State
 children	Refinement_State.h	/^            child_id_list_t children;$/;"	m	class:AMR::Refinement_State
-children	edge_store.h	/^            std::map<edge_t, size_t> children;$/;"	m	class:AMR::edge_store_t
-consume_tets	mesh_adapter.h	/^            void consume_tets( std::vector< std::size_t > m_tetinpoel )$/;"	f	class:AMR::mesh_adapter_t
+coordinates	node_store.h	/^            node_coordinates_t coordinates;$/;"	m	class:AMR::node_store_t
 copy_tet	refinement.h	/^            void copy_tet(tet_t* out, tet_t* original)$/;"	f	class:AMR::refinement_t
 data	edge.h	/^        edge_ data;$/;"	m	class:edge_t
 data	tet_store.h	/^            Refinement_State& data(size_t id)$/;"	f	class:AMR::tet_store_t
 deactivate	tet_store.h	/^            void deactivate(size_t id) {$/;"	f	class:AMR::tet_store_t
-deactivate_tet_edges	mesh_adapter.h	/^            void deactivate_tet_edges(size_t tet_id) {$/;"	f	class:AMR::mesh_adapter_t
 debug_out	Loggers.h	/^#define debug_out /;"	d
 delete_intermediates	refinement.h	/^            void delete_intermediates(size_t tet_id)$/;"	f	class:AMR::refinement_t
 delete_intermediates_of_children	refinement.h	/^            void delete_intermediates_of_children(size_t parent_id)$/;"	f	class:AMR::refinement_t
 delete_non_matching_edges	refinement.h	/^            void delete_non_matching_edges(edge_list_t candidate, edge_list_t basis)$/;"	f	class:AMR::refinement_t
 derefine_children	refinement.h	/^            void derefine_children(size_t parent_id)$/;"	f	class:AMR::refinement_t
-derefine_eight_to_four	refinement.h	/^            void derefine_eight_to_four(size_t parent_id)$/;"	f	class:AMR::refinement_t
 derefine_eight_to_one	refinement.h	/^            void derefine_eight_to_one(size_t parent_id)$/;"	f	class:AMR::refinement_t
-derefine_eight_to_two	refinement.h	/^            void derefine_eight_to_two(size_t parent_id)$/;"	f	class:AMR::refinement_t
 derefine_four_to_one	refinement.h	/^            void derefine_four_to_one(size_t parent_id)$/;"	f	class:AMR::refinement_t
-derefine_four_to_two	refinement.h	/^            void derefine_four_to_two(size_t parent_id)$/;"	f	class:AMR::refinement_t
 derefine_two_to_one	refinement.h	/^            void derefine_two_to_one(size_t parent_id)$/;"	f	class:AMR::refinement_t
 derefinement_cut_off	mesh_adapter.h	/^            const real_t derefinement_cut_off = 0.2;$/;"	m	class:AMR::mesh_adapter_t
 derefinement_t	derefinement.h	/^            derefinement_t(tet_store_t* ts) : tet_store(ts)$/;"	f	class:AMR::derefinement_t
 derefinement_t	derefinement.h	/^    class derefinement_t {$/;"	c	namespace:AMR
-derefiner	mesh_adapter.h	/^            AMR::derefinement_t *derefiner;$/;"	m	class:AMR::mesh_adapter_t
-detect_compatibility	mesh_adapter.h	/^            int detect_compatibility(int num_locked_edges,$/;"	f	class:AMR::mesh_adapter_t
 edge_store	tet_store.h	/^            AMR::edge_store_t edge_store;$/;"	m	class:AMR::tet_store_t
 edge_store_t	edge_store.h	/^    class edge_store_t {$/;"	c	namespace:AMR
 edge_t	edge.h	/^        edge_t()$/;"	f	class:edge_t
-edge_t	edge.h	/^        edge_t(const edge_t &e)$/;"	f	class:edge_t
 edge_t	edge.h	/^        edge_t(size_t A, size_t B)$/;"	f	class:edge_t
 edge_t	edge.h	/^class edge_t {$/;"	c
 edges	edge_store.h	/^            edges_t edges;$/;"	m	class:AMR::edge_store_t
@@ -130,23 +129,19 @@ erase	edge_store.h	/^            void erase(edge_t key)$/;"	f	class:AMR::edge_st
 erase	marked_refinements_store.h	/^            void erase(size_t id)$/;"	f	class:AMR::marked_refinements_store_t
 erase	master_element_store.h	/^            void erase(size_t id) {$/;"	f	class:AMR::master_element_store_t
 erase	tet_store.h	/^            void erase(size_t id)$/;"	f	class:AMR::tet_store_t
-evaluate_error_estimate	mesh_adapter.h	/^            void evaluate_error_estimate() {$/;"	f	class:AMR::mesh_adapter_t
 exists	active_element_store.h	/^            bool exists(size_t id)$/;"	f	class:AMR::active_element_store_t
 exists	edge_store.h	/^            bool exists(edge_t key)$/;"	f	class:AMR::edge_store_t
 exists	marked_refinements_store.h	/^            bool exists(size_t id)$/;"	f	class:AMR::marked_refinements_store_t
 exists	master_element_store.h	/^            bool exists(size_t id)$/;"	f	class:AMR::master_element_store_t
 exists	tet_store.h	/^            bool exists(size_t id)$/;"	f	class:AMR::tet_store_t
-face_list_opposite	node_connectivity.h	/^            static size_t face_list_opposite(face_list_t face_list, size_t opposite_index)$/;"	f	class:AMR::node_connectivity_t
-fill_initial_nodes	node_connectivity.h	/^            void fill_initial_nodes(size_t initial_size)$/;"	f	class:AMR::node_connectivity_t
-find	node_connectivity.h	/^            int find(size_t A, size_t B)$/;"	f	class:AMR::node_connectivity_t
-find_intermediate_nodes	tet_store.h	/^            size_t find_intermediate_nodes(size_t A, size_t B) $/;"	f	class:AMR::tet_store_t
-find_mid_point	node_store.h	/^            coordinate_t find_mid_point(size_t id1, size_t id2)$/;"	f	class:AMR::node_store_t
-find_mid_point	util.h	/^        coordinate_t find_mid_point($/;"	f	namespace:AMR::util
-find_mid_point	util.h	/^        coordinate_t find_mid_point(real_t x1, real_t y1,$/;"	f	namespace:AMR::util
+face_list_opposite	node_store.h	/^            static size_t face_list_opposite(face_list_t face_list, size_t opposite_index)$/;"	f	class:AMR::node_store_t
+fill_initial_nodes	node_store.h	/^            void fill_initial_nodes(size_t initial_size)$/;"	f	class:AMR::node_store_t
+find	node_store.h	/^            int find(size_t A, size_t B)$/;"	f	class:AMR::node_store_t
+find_mid_point	node_coordinates.h	/^            coordinate_t find_mid_point(size_t id1, size_t id2)$/;"	f	class:AMR::node_coordinates_t
 find_single_refinement_nodes	refinement.h	/^            node_pair_t find_single_refinement_nodes(edge_list_t edge_list)$/;"	f	class:AMR::refinement_t
 first	edge.h	/^        size_t first()$/;"	f	class:edge_t
-four_to_eight	Refinement_State.h	/^        two_to_eight, four_to_eight, none };$/;"	e	enum:AMR::Refinement_Case
-generate	edge_store.h	/^            void generate(size_t A, size_t B, Edge_Lock_Case lock_case)$/;"	f	class:AMR::edge_store_t
+four_to_eight	Refinement_State.h	/^        two_to_eight, four_to_eight, none };$/;"	m	class:AMR::Refinement_Case
+generate	edge_store.h	/^            void generate(size_t A, size_t B, Edge_Lock_Case lockcase)$/;"	f	class:AMR::edge_store_t
 generate_child_ids	id_generator.h	/^            child_id_list_t generate_child_ids(size_t parent_id, size_t count = MAX_CHILDREN)$/;"	f	class:AMR::id_generator_t
 generate_child_ids	id_generator.h	/^            static child_id_list_t generate_child_ids(size_t parent_id, size_t count = MAX_CHILDREN)$/;"	f	class:AMR::morton_id_generator_t
 generate_child_ids	refinement.h	/^            child_id_list_t generate_child_ids(size_t parent_id, size_t count = MAX_CHILDREN)$/;"	f	class:AMR::refinement_t
@@ -161,9 +156,11 @@ generic_derefine	refinement.h	/^            void generic_derefine(size_t parent_
 get	edge_store.h	/^            Edge_Refinement& get(edge_t key)$/;"	f	class:AMR::edge_store_t
 get	marked_refinements_store.h	/^            Refinement_Case& get(size_t id)$/;"	f	class:AMR::marked_refinements_store_t
 get	master_element_store.h	/^            Refinement_State& get(size_t id)$/;"	f	class:AMR::master_element_store_t
-get	node_connectivity.h	/^            node_pair_t get(size_t id)$/;"	f	class:AMR::node_connectivity_t
+get	node_coordinates.h	/^            coordinate_t get(size_t id)$/;"	f	class:AMR::node_coordinates_t
+get	node_store.h	/^            node_pair_t get(size_t id)$/;"	f	class:AMR::node_store_t
 get	tet_store.h	/^            tet_t get( size_t id )$/;"	f	class:AMR::tet_store_t
 get_active_coordinate_array	tet_store.h	/^            std::vector< real_t > get_active_coordinate_array(std::vector<real_t> in)$/;"	f	class:AMR::tet_store_t
+get_active_id_mapping	tet_store.h	/^            std::vector< std::size_t >& get_active_id_mapping()$/;"	f	class:AMR::tet_store_t
 get_active_inpoel	tet_store.h	/^            std::vector< std::size_t >& get_active_inpoel()$/;"	f	class:AMR::tet_store_t
 get_cell_type_list	tet_store.h	/^            std::vector< real_t >& get_cell_type_list()$/;"	f	class:AMR::tet_store_t
 get_child_id	id_generator.h	/^            static size_t get_child_id(size_t parent_id)$/;"	f	class:AMR::morton_id_generator_t
@@ -178,29 +175,33 @@ get_parent_id	tet_store.h	/^            size_t get_parent_id(size_t id)$/;"	f	cl
 get_refinement_case	tet_store.h	/^            Refinement_Case get_refinement_case(size_t id)$/;"	f	class:AMR::tet_store_t
 get_refinement_level_list	tet_store.h	/^            std::vector< real_t >& get_refinement_level_list()$/;"	f	class:AMR::tet_store_t
 get_state_changed	marked_refinements_store.h	/^            bool get_state_changed()$/;"	f	class:AMR::marked_refinements_store_t
+get_x_array	node_coordinates.h	/^            coord_type* get_x_array() { return m_x; }$/;"	f	class:AMR::node_coordinates_t
+get_x_array	node_store.h	/^            coord_type* get_x_array() { return coordinates.get_x_array(); }$/;"	f	class:AMR::node_store_t
+get_y_array	node_coordinates.h	/^            coord_type* get_y_array() { return m_y; }$/;"	f	class:AMR::node_coordinates_t
+get_y_array	node_store.h	/^            coord_type* get_y_array() { return coordinates.get_y_array(); }$/;"	f	class:AMR::node_store_t
+get_z_array	node_coordinates.h	/^            coord_type* get_z_array() { return m_z; }$/;"	f	class:AMR::node_coordinates_t
+get_z_array	node_store.h	/^            coord_type* get_z_array() { return coordinates.get_z_array(); }$/;"	f	class:AMR::node_store_t
 has_refinement_decision	tet_store.h	/^            bool has_refinement_decision(size_t id)$/;"	f	class:AMR::tet_store_t
 id_generator	tet_store.h	/^            AMR::id_generator_t id_generator;$/;"	m	class:AMR::tet_store_t
-id_generator_t	id_generator.h	/^            id_generator_t()$/;"	f	class:AMR::id_generator_t
+id_generator_t	id_generator.h	/^            id_generator_t(size_t start_tet_id = 0) :$/;"	f	class:AMR::id_generator_t
 id_generator_t	id_generator.h	/^    class id_generator_t {$/;"	c	namespace:AMR
-id_to_coordinate	node_store.h	/^            coordinate_t id_to_coordinate(size_t id)$/;"	f	class:AMR::node_store_t
-init	mesh_adapter.h	/^            void init(std::vector<size_t> m_tetinpoel, size_t count) {$/;"	f	class:AMR::mesh_adapter_t
-init_node_store	mesh_adapter.h	/^            void init_node_store(coord_type* m_x, coord_type* m_y, coord_type* m_z, size_t* graph_size)$/;"	f	class:AMR::mesh_adapter_t
-init_with_nodes	mesh_adapter.h	/^            void init_with_nodes(coord_type* m_x, coord_type* m_y, coord_type* m_z, size_t* graph_size)$/;"	f	class:AMR::mesh_adapter_t
-initial_grid	Refinement_State.h	/^    enum Refinement_Case { initial_grid, one_to_two, one_to_four, one_to_eight,$/;"	e	enum:AMR::Refinement_Case
+id_to_coordinate	node_coordinates.h	/^            coordinate_t id_to_coordinate(size_t id)$/;"	f	class:AMR::node_coordinates_t
+init	node_coordinates.h	/^            void init(coord_type* x, coord_type* y, coord_type* z, size_t graph_size)$/;"	f	class:AMR::node_coordinates_t
+init_coordinates	node_store.h	/^            void init_coordinates(coord_type* x, coord_type* y, coord_type* z, size_t graph_size)$/;"	f	class:AMR::node_store_t
+initial_grid	Refinement_State.h	/^    enum class Refinement_Case { initial_grid, one_to_two, one_to_four, one_to_eight,$/;"	m	class:AMR::Refinement_Case
 insert	tet_store.h	/^            void insert(size_t id, tet_t t)$/;"	f	class:AMR::tet_store_t
-intermediate	Refinement_State.h	/^    enum Edge_Lock_Case {unlocked, locked, intermediate, temporary};$/;"	e	enum:AMR::Edge_Lock_Case
+intermediate	Refinement_State.h	/^    enum class Edge_Lock_Case {unlocked, locked, intermediate, temporary};$/;"	m	class:AMR::Edge_Lock_Case
 is_active	tet_store.h	/^            bool is_active(size_t id)$/;"	f	class:AMR::tet_store_t
 is_center	tet_store.h	/^            bool is_center(size_t id)$/;"	f	class:AMR::tet_store_t
 is_dead	Refinement_State.h	/^        bool is_dead;$/;"	m	struct:AMR::Edge_Refinement
-lockCase	Refinement_State.h	/^        Edge_Lock_Case lockCase; \/\/ TODO: Refactor this to match _ style?$/;"	m	struct:AMR::Edge_Refinement
+lock_case	Refinement_State.h	/^        Edge_Lock_Case lock_case;$/;"	m	struct:AMR::Edge_Refinement
 lock_case	edge_store.h	/^            Edge_Lock_Case lock_case(edge_t key)$/;"	f	class:AMR::edge_store_t
 lock_edges_from_node	refinement.h	/^            void lock_edges_from_node($/;"	f	class:AMR::refinement_t
-lock_tet_edges	mesh_adapter.h	/^            void lock_tet_edges(size_t tet_id) {$/;"	f	class:AMR::mesh_adapter_t
-locked	Refinement_State.h	/^    enum Edge_Lock_Case {unlocked, locked, intermediate, temporary};$/;"	e	enum:AMR::Edge_Lock_Case
-m_graphsize	node_store.h	/^            size_t* m_graphsize;$/;"	m	class:AMR::node_store_t
-m_x	node_store.h	/^            coord_type* m_x;$/;"	m	class:AMR::node_store_t
-m_y	node_store.h	/^            coord_type* m_y;$/;"	m	class:AMR::node_store_t
-m_z	node_store.h	/^            coord_type* m_z;$/;"	m	class:AMR::node_store_t
+locked	Refinement_State.h	/^    enum class Edge_Lock_Case {unlocked, locked, intermediate, temporary};$/;"	m	class:AMR::Edge_Lock_Case
+m_graphsize	node_coordinates.h	/^            size_t m_graphsize;$/;"	m	class:AMR::node_coordinates_t
+m_x	node_coordinates.h	/^            coord_type* m_x;$/;"	m	class:AMR::node_coordinates_t
+m_y	node_coordinates.h	/^            coord_type* m_y;$/;"	m	class:AMR::node_coordinates_t
+m_z	node_coordinates.h	/^            coord_type* m_z;$/;"	m	class:AMR::node_coordinates_t
 mark_edge_for_derefinement	edge_store.h	/^            void mark_edge_for_derefinement(edge_t key) {$/;"	f	class:AMR::edge_store_t
 mark_edges_for_derefinement	edge_store.h	/^            void mark_edges_for_derefinement(std::vector<node_pair_t> ids) {$/;"	f	class:AMR::edge_store_t
 mark_edges_for_refinement	edge_store.h	/^            void mark_edges_for_refinement(std::vector<node_pair_t> ids) {$/;"	f	class:AMR::edge_store_t
@@ -210,47 +211,40 @@ mark_four_to_eight	tet_store.h	/^            void mark_four_to_eight(size_t tet_
 mark_one_to_eight	tet_store.h	/^            void mark_one_to_eight(size_t tet_id)$/;"	f	class:AMR::tet_store_t
 mark_one_to_four	tet_store.h	/^            void mark_one_to_four(size_t tet_id)$/;"	f	class:AMR::tet_store_t
 mark_one_to_two	tet_store.h	/^            void mark_one_to_two(size_t tet_id)$/;"	f	class:AMR::tet_store_t
-mark_refinement	mesh_adapter.h	/^            void mark_refinement() {$/;"	f	class:AMR::mesh_adapter_t
 mark_two_to_eight	tet_store.h	/^            void mark_two_to_eight(size_t tet_id)$/;"	f	class:AMR::tet_store_t
 marked_refinements	marked_refinements_store.h	/^            std::map<size_t, Refinement_Case> marked_refinements;$/;"	m	class:AMR::marked_refinements_store_t
 marked_refinements	tet_store.h	/^            AMR::marked_refinements_store_t marked_refinements;$/;"	m	class:AMR::tet_store_t
 marked_refinements_store_t	marked_refinements_store.h	/^    class marked_refinements_store_t {$/;"	c	namespace:AMR
-master_element_number	Refinement_State.h	/^            size_t master_element_number; \/\/ TODO: Some of these can be removed?$/;"	m	class:AMR::Refinement_State
 master_element_store_t	master_element_store.h	/^    class master_element_store_t {$/;"	c	namespace:AMR
 master_elements	master_element_store.h	/^            std::map<size_t, Refinement_State> master_elements;$/;"	m	class:AMR::master_element_store_t
 master_elements	tet_store.h	/^            AMR::master_element_store_t master_elements;$/;"	m	class:AMR::tet_store_t
 mesh_adapter_t	mesh_adapter.h	/^    class mesh_adapter_t {$/;"	c	namespace:AMR
-morton_id_generator_t	id_generator.h	/^            morton_id_generator_t() : id_generator_t() {$/;"	f	class:AMR::morton_id_generator_t
+morton_id_generator_t	id_generator.h	/^            morton_id_generator_t() : id_generator_t(START_TET_ID) {$/;"	f	class:AMR::morton_id_generator_t
 morton_id_generator_t	id_generator.h	/^    class morton_id_generator_t : public id_generator_t$/;"	c	namespace:AMR
 needs_derefining	Refinement_State.h	/^        bool needs_derefining; \/\/ TODO: Marge this with needs_refining$/;"	m	struct:AMR::Edge_Refinement
 needs_refining	Refinement_State.h	/^        bool needs_refining; \/\/ TODO: This could possibly be deduced implicitly$/;"	m	struct:AMR::Edge_Refinement
 next_tet_id	id_generator.h	/^            size_t next_tet_id;$/;"	m	class:AMR::id_generator_t
-node_connectivity	mesh_adapter.h	/^            AMR::node_connectivity_t node_connectivity;$/;"	m	class:AMR::mesh_adapter_t
-node_connectivity	refinement.h	/^            node_connectivity_t* node_connectivity;$/;"	m	class:AMR::refinement_t
-node_connectivity_t	node_connectivity.h	/^            node_connectivity_t() { } \/\/ default cons$/;"	f	class:AMR::node_connectivity_t
-node_connectivity_t	node_connectivity.h	/^    class node_connectivity_t {$/;"	c	namespace:AMR
+node_coordinates_t	node_coordinates.h	/^            node_coordinates_t() { } \/\/ default cons$/;"	f	class:AMR::node_coordinates_t
+node_coordinates_t	node_coordinates.h	/^    class node_coordinates_t$/;"	c	namespace:AMR
 node_store	mesh_adapter.h	/^            AMR::node_store_t node_store;$/;"	m	class:AMR::mesh_adapter_t
-node_store_t	node_store.h	/^            node_store_t() { } \/\/ default cons$/;"	f	class:AMR::node_store_t
-node_store_t	node_store.h	/^    class node_store_t$/;"	c	namespace:AMR
-nodes	node_connectivity.h	/^            std::vector<node_pair_t> nodes;$/;"	m	class:AMR::node_connectivity_t
+node_store	refinement.h	/^            node_store_t* node_store;$/;"	m	class:AMR::refinement_t
+node_store_t	node_store.h	/^    class node_store_t {$/;"	c	namespace:AMR
+nodes	node_store.h	/^            std::vector<node_pair_t> nodes;$/;"	m	class:AMR::node_store_t
 nodes_to_key	edge_store.h	/^            static edge_t nodes_to_key(size_t A, size_t B)$/;"	f	class:AMR::edge_store_t
-none	Refinement_State.h	/^        two_to_eight, four_to_eight, none };$/;"	e	enum:AMR::Refinement_Case
 num_children	Refinement_State.h	/^            size_t num_children; \/\/ TODO: this could be replace with children.size()?$/;"	m	class:AMR::Refinement_State
-one_to_eight	Refinement_State.h	/^    enum Refinement_Case { initial_grid, one_to_two, one_to_four, one_to_eight,$/;"	e	enum:AMR::Refinement_Case
-one_to_four	Refinement_State.h	/^    enum Refinement_Case { initial_grid, one_to_two, one_to_four, one_to_eight,$/;"	e	enum:AMR::Refinement_Case
-one_to_two	Refinement_State.h	/^    enum Refinement_Case { initial_grid, one_to_two, one_to_four, one_to_eight,$/;"	e	enum:AMR::Refinement_Case
+one_to_eight	Refinement_State.h	/^    enum class Refinement_Case { initial_grid, one_to_two, one_to_four, one_to_eight,$/;"	m	class:AMR::Refinement_Case
+one_to_four	Refinement_State.h	/^    enum class Refinement_Case { initial_grid, one_to_two, one_to_four, one_to_eight,$/;"	m	class:AMR::Refinement_Case
+one_to_two	Refinement_State.h	/^    enum class Refinement_Case { initial_grid, one_to_two, one_to_four, one_to_eight,$/;"	m	class:AMR::Refinement_Case
+operator	edge.C	/^std::ostream& operator<<(std::ostream& os, const edge_t& e)$/;"	f
 operator <	edge.h	/^        bool operator<(const edge_t& rhs) const$/;"	f	class:edge_t
-operator <<	edge.h	/^std::ostream& operator<<(std::ostream& os, const edge_t& e)$/;"	f
 operator ==	edge.h	/^        bool operator==(const edge_t& rhs) const$/;"	f	class:edge_t
 operator >	edge.h	/^        bool operator>(const edge_t& rhs) const$/;"	f	class:edge_t
 parent_id	Refinement_State.h	/^            size_t parent_id;$/;"	m	class:AMR::Refinement_State
-perform_refinement	mesh_adapter.h	/^            void perform_refinement()$/;"	f	class:AMR::mesh_adapter_t
 print	edge_store.h	/^            void print() {$/;"	f	class:AMR::edge_store_t
-print	node_connectivity.h	/^            void print()$/;"	f	class:AMR::node_connectivity_t
+print	node_coordinates.h	/^            void print()$/;"	f	class:AMR::node_coordinates_t
 print	node_store.h	/^            void print()$/;"	f	class:AMR::node_store_t
 print_edges	tet_store.h	/^            void print_edges()$/;"	f	class:AMR::tet_store_t
 print_node_types	tet_store.h	/^            void print_node_types()$/;"	f	class:AMR::tet_store_t
-print_tets	mesh_adapter.h	/^            void print_tets() {$/;"	f	class:AMR::mesh_adapter_t
 print_tets	tet_store.h	/^            void print_tets() {$/;"	f	class:AMR::tet_store_t
 refine_one_to_eight	refinement.h	/^            void refine_one_to_eight( size_t tet_id ) {$/;"	f	class:AMR::refinement_t
 refine_one_to_four	refinement.h	/^            void refine_one_to_four($/;"	f	class:AMR::refinement_t
@@ -258,41 +252,32 @@ refine_one_to_four	refinement.h	/^            void refine_one_to_four(size_t tet
 refine_one_to_two	refinement.h	/^            void refine_one_to_two($/;"	f	class:AMR::refinement_t
 refine_one_to_two	refinement.h	/^            void refine_one_to_two(size_t tet_id)$/;"	f	class:AMR::refinement_t
 refinement_case	Refinement_State.h	/^            Refinement_Case refinement_case;$/;"	m	class:AMR::Refinement_State
-refinement_class_one	mesh_adapter.h	/^            void refinement_class_one(int num_to_refine, edge_list_t edge_list,$/;"	f	class:AMR::mesh_adapter_t
-refinement_class_three	mesh_adapter.h	/^            void refinement_class_three(size_t tet_id) {$/;"	f	class:AMR::mesh_adapter_t
-refinement_class_two	mesh_adapter.h	/^            void refinement_class_two(edge_list_t edge_list, size_t tet_id) {$/;"	f	class:AMR::mesh_adapter_t
 refinement_criteria	Refinement_State.h	/^        real_t refinement_criteria;$/;"	m	struct:AMR::Edge_Refinement
 refinement_cut_off	mesh_adapter.h	/^            const real_t refinement_cut_off = 0.9;$/;"	m	class:AMR::mesh_adapter_t
 refinement_level	Refinement_State.h	/^            size_t refinement_level;$/;"	m	class:AMR::Refinement_State
 refinement_level_list	tet_store.h	/^            std::vector<real_t> refinement_level_list;$/;"	m	class:AMR::tet_store_t
 refinement_state_changed	marked_refinements_store.h	/^            bool refinement_state_changed = false;$/;"	m	class:AMR::marked_refinements_store_t
-refinement_t	refinement.h	/^            refinement_t(tet_store_t* ts, node_connectivity_t* ns) : tet_store(ts), node_connectivity(ns)$/;"	f	class:AMR::refinement_t
+refinement_t	refinement.h	/^            refinement_t(tet_store_t* ts, node_store_t* ns) : tet_store(ts), node_store(ns)$/;"	f	class:AMR::refinement_t
 refinement_t	refinement.h	/^    class refinement_t {$/;"	c	namespace:AMR
 refiner	mesh_adapter.h	/^            AMR::refinement_t *refiner;$/;"	m	class:AMR::mesh_adapter_t
 replace	active_element_store.h	/^            void replace(size_t old_id, size_t new_id)$/;"	f	class:AMR::active_element_store_t
 replace	edge.h	/^        void replace(size_t new_id, size_t old_id)$/;"	f	class:edge_t
-replace	edge_store.h	/^            void replace(size_t old_id, size_t new_id)$/;"	f	class:AMR::edge_store_t
-replace	marked_refinements_store.h	/^            void replace(size_t old_id, size_t new_id)$/;"	f	class:AMR::marked_refinements_store_t
-replace	master_element_store.h	/^            void replace(size_t old_id, size_t new_id)$/;"	f	class:AMR::master_element_store_t
 replace	tet_store.h	/^            void replace(size_t old_id, size_t new_id)$/;"	f	class:AMR::tet_store_t
 replace_node	refinement.h	/^            void replace_node(tet_t* tet, size_t remove, size_t add)$/;"	f	class:AMR::refinement_t
 second	edge.h	/^        size_t second()$/;"	f	class:edge_t
 set_state_changed	marked_refinements_store.h	/^            void set_state_changed(bool t)$/;"	f	class:AMR::marked_refinements_store_t
-set_x	node_store.h	/^            void set_x(coord_type* x_in) { m_x = x_in; }$/;"	f	class:AMR::node_store_t
-set_y	node_store.h	/^            void set_y(coord_type* y_in) { m_y = y_in; }$/;"	f	class:AMR::node_store_t
-set_z	node_store.h	/^            void set_z(coord_type* z_in) { m_z = z_in; }$/;"	f	class:AMR::node_store_t
+set_x	node_coordinates.h	/^            void set_x(coord_type* x_in) { m_x = x_in; }$/;"	f	class:AMR::node_coordinates_t
+set_y	node_coordinates.h	/^            void set_y(coord_type* y_in) { m_y = y_in; }$/;"	f	class:AMR::node_coordinates_t
+set_z	node_coordinates.h	/^            void set_z(coord_type* z_in) { m_z = z_in; }$/;"	f	class:AMR::node_coordinates_t
 size	edge_store.h	/^            size_t size()$/;"	f	class:AMR::edge_store_t
 size	master_element_store.h	/^            size_t size() {$/;"	f	class:AMR::master_element_store_t
-size	node_connectivity.h	/^            size_t size()$/;"	f	class:AMR::node_connectivity_t
-size	node_store.h	/^            real_t size()$/;"	f	class:AMR::node_store_t
+size	node_coordinates.h	/^            size_t size()$/;"	f	class:AMR::node_coordinates_t
+size	node_store.h	/^            size_t size()$/;"	f	class:AMR::node_store_t
 size	tet_store.h	/^            size_t size() {$/;"	f	class:AMR::tet_store_t
-split	edge_store.h	/^            void split(size_t A, size_t B, size_t AB, Edge_Lock_Case lock_case)$/;"	f	class:AMR::edge_store_t
-split	util.h	/^        std::vector<std::string> split(const std::string &s, char delim) {$/;"	f	namespace:AMR::util
-split	util.h	/^        void split(const std::string &s, char delim,$/;"	f	namespace:AMR::util
+split	edge_store.h	/^            void split(size_t A, size_t B, size_t AB, Edge_Lock_Case lockcase)$/;"	f	class:AMR::edge_store_t
 start_id	id_generator.h	/^            size_t start_id;$/;"	m	class:AMR::id_generator_t
 store_tet	tet_store.h	/^            void store_tet($/;"	f	class:AMR::tet_store_t
-store_tet	tet_store.h	/^            void store_tet(size_t id, tet_t nodes) {$/;"	f	class:AMR::tet_store_t
-temporary	Refinement_State.h	/^    enum Edge_Lock_Case {unlocked, locked, intermediate, temporary};$/;"	e	enum:AMR::Edge_Lock_Case
+store_tet	tet_store.h	/^            void store_tet(size_t id, tet_t nodes)$/;"	f	class:AMR::tet_store_t
 tet_id_to_node_id	refinement.h	/^            size_t tet_id_to_node_id(size_t tet, size_t element) {$/;"	f	class:AMR::refinement_t
 tet_store	derefinement.h	/^            tet_store_t* tet_store;$/;"	m	class:AMR::derefinement_t
 tet_store	mesh_adapter.h	/^            AMR::tet_store_t tet_store;$/;"	m	class:AMR::mesh_adapter_t
@@ -300,13 +285,11 @@ tet_store	refinement.h	/^            tet_store_t* tet_store;$/;"	m	class:AMR::re
 tet_store_t	tet_store.h	/^    class tet_store_t {$/;"	c	namespace:AMR
 tets	tet_store.h	/^            tet_list_t tets;$/;"	m	class:AMR::tet_store_t
 trace_out	Loggers.h	/^#define trace_out /;"	d
-two_to_eight	Refinement_State.h	/^        two_to_eight, four_to_eight, none };$/;"	e	enum:AMR::Refinement_Case
-uniform_refinement	mesh_adapter.h	/^            void uniform_refinement()$/;"	f	class:AMR::mesh_adapter_t
-unlocked	Refinement_State.h	/^    enum Edge_Lock_Case {unlocked, locked, intermediate, temporary};$/;"	e	enum:AMR::Edge_Lock_Case
+two_to_eight	Refinement_State.h	/^        two_to_eight, four_to_eight, none };$/;"	m	class:AMR::Refinement_Case
+unlocked	Refinement_State.h	/^    enum class Edge_Lock_Case {unlocked, locked, intermediate, temporary};$/;"	m	class:AMR::Edge_Lock_Case
 unmark_for_refinement	edge_store.h	/^            void unmark_for_refinement(edge_t key)$/;"	f	class:AMR::edge_store_t
 unset_marked_children	tet_store.h	/^            void unset_marked_children(size_t parent_id)$/;"	f	class:AMR::tet_store_t
-update_id	tet_store.h	/^            void update_id(size_t old_id, size_t new_id)$/;"	f	class:AMR::tet_store_t
 util	util.h	/^    namespace util {$/;"	n	namespace:AMR
-x	node_store.h	/^            real_t x(size_t id)$/;"	f	class:AMR::node_store_t
-y	node_store.h	/^            real_t y(size_t id)$/;"	f	class:AMR::node_store_t
-z	node_store.h	/^            real_t z(size_t id)$/;"	f	class:AMR::node_store_t
+x	node_coordinates.h	/^            real_t x(size_t id)$/;"	f	class:AMR::node_coordinates_t
+y	node_coordinates.h	/^            real_t y(size_t id)$/;"	f	class:AMR::node_coordinates_t
+z	node_coordinates.h	/^            real_t z(size_t id)$/;"	f	class:AMR::node_coordinates_t

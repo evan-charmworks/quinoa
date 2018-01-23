@@ -327,10 +327,10 @@ class Partitioner : public CBase_Partitioner {
     AMR::mesh_adapter_t* mesh_adapter;
 
     //! Read our contiguously-numbered chunk of the mesh graph from file
-    void readGraph( tk::ExodusIIMeshReader& er );
+    uint64_t readGraph( tk::ExodusIIMeshReader& er );
 
     //! Compute element centroid coordinates
-    void computeCentroids( tk::ExodusIIMeshReader& er );
+    void computeCentroids( const std::array<coord_type*,3> coords );
 
     //! Construct global mesh node ids for each chare
     std::unordered_map< int, std::vector< std::size_t > >
@@ -373,6 +373,10 @@ class Partitioner : public CBase_Partitioner {
 
     //! Compute communication cost of linear system merging for our PE
     tk::real cost( std::size_t l, std::size_t u );
+
+    void contribute_num_elem(uint64_t nelem);
+    std::array<uint64_t,2> compute_from_till(uint64_t nel);
+    void set_gelemid();
 };
 
 } // inciter::
