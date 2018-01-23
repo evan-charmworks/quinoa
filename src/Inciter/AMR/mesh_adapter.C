@@ -14,7 +14,7 @@ namespace AMR {
      * @param graph_size Number of nodes
      * // TODO: this can be deduced from size of x/y/z?
      */
-    void mesh_adapter_t::init_node_coordinates(coord_type* m_x, coord_type* m_y, coord_type* m_z, size_t graph_size)
+    void mesh_adapter_t::init_node_coordinates(coord_type& m_x, coord_type& m_y, coord_type& m_z, size_t graph_size)
     {
         node_store.init_coordinates(m_x, m_y, m_z, graph_size);
     }

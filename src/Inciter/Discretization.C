@@ -119,14 +119,15 @@ Discretization::Discretization(
   z.resize( nn );
 
   tk::ExodusIIMeshReader er( g_inputdeck.get< tag::cmd, tag::io, tag::input >() );
-  auto nnode = er.readHeader();
+  //auto nnode = er.readHeader();
 
   for (auto p : m_gid) {
 
       // TODO: this bounds check can presumably be removed
+      // TODO: m_filenodes shoiuld be removed
       auto n = m_filenodes.find(p);
-      if (n != end(m_filenodes) && n->second < nnode)
-      {
+      //if (n != end(m_filenodes) && n->second < nnode)
+      //{
           auto find_id = n->second;
           const auto& this_coord = tk::cref_find(coords, find_id);
 
@@ -135,7 +136,7 @@ Discretization::Discretization(
           y[local_id] = this_coord[1];
           z[local_id] = this_coord[2];
 
-      }
+      //}
       /*else
       {
           std::cout << "CONS SKIP" << p << std::endl;

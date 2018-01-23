@@ -17,12 +17,19 @@ namespace AMR {
         private:
             std::vector<node_pair_t> nodes;
             node_coordinates_t coordinates;
+            // TODO: Replace this with a stubbed coordinates object to avoid
+            // branching?
+            bool track_coords = false;
 
         public:
             // Pass through functions to coordinates
             coord_type* get_x_array() { return coordinates.get_x_array(); }
             coord_type* get_y_array() { return coordinates.get_y_array(); }
             coord_type* get_z_array() { return coordinates.get_z_array(); }
+            coordinate_t get_coords(size_t id) {
+                Assert( id < size(), "Invalid ID");
+                return coordinates.get(id);
+            }
 
             /**
              * @brief Function to enable the tracking of node coordinateds. Must be
@@ -34,8 +41,9 @@ namespace AMR {
              * @param graph_size Number of nodes
              * // TODO: this can be deduced from size of x/y/z?
              */
-            void init_coordinates(coord_type* x, coord_type* y, coord_type* z, size_t graph_size)
+            void init_coordinates(coord_type& x, coord_type& y, coord_type& z, size_t graph_size)
             {
+                track_coords = true;
                 coordinates.init(x, y, z, graph_size);
             }
 
@@ -163,6 +171,14 @@ namespace AMR {
                 }
 
                 nodes.push_back( {{std::min(A,B), std::max(A,B)}} );
+
+                if (track_coords)
+                {
+                    int ret_id = coordinates.add_between( std::min(A,B), std::max(A,B) );
+                    Assert(ret_id == size()-1, "Coordinates stores has different numbers of nodes");
+                }
+
+
                 return size()-1;
             }
 
@@ -175,6 +191,10 @@ namespace AMR {
                 for (size_t i = 0; i < size(); i ++)
                 {
                     std::cout << i << ": A " << get(i)[0] << " B " << get(i)[1] << std::endl;
+                }
+                if (track_coords)
+                {
+                    coordinates.print();
                 }
             }
 

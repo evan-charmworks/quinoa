@@ -56,7 +56,7 @@ Partitioner::Partitioner( const std::vector< CkCallback >& cb,
   m_linedges(),
   m_chinpoel(),
   m_chfilenodes(),
-  m_chedgenodes(),
+  m_chedgenodes(), // TOOD: remove this
   m_cost( 0.0 ),
   m_nodechares(),
   m_edgechares(),
@@ -79,9 +79,7 @@ Partitioner::Partitioner( const std::vector< CkCallback >& cb,
   // Init common AMR object
   mesh_adapter = new AMR::mesh_adapter_t();
 
-
   // Read coords from file
-
   auto gid = m_tetinpoel;
   tk::unique( gid );
 
@@ -113,9 +111,9 @@ Partitioner::Partitioner( const std::vector< CkCallback >& cb,
   // TODO: This is kind of cheating, as it just passes the data back in
   // TODO: Is there a way to be certain that the data lines up?
   mesh_adapter->init_node_coordinates(
-          &x,
-          &y,
-          &z,
+          x,
+          y,
+          z,
           num_unique_nodes // TODO: This parameter is redundant if both node store track same size
   );
   std::cout << "Node store size is " << mesh_adapter->node_store.size() << " x " << x.size() << std::endl;
@@ -135,19 +133,23 @@ Partitioner::Partitioner( const std::vector< CkCallback >& cb,
   set_gelemid();
   contribute_num_elem(num_elem_from_file);
 
-  const auto& coord_x = mesh_adapter->node_store.get_x_array();
-  const auto& coord_y = mesh_adapter->node_store.get_y_array();
-  const auto& coord_z = mesh_adapter->node_store.get_z_array();
-  const std::array<coord_type*,3> coords = {{ coord_x, coord_y, coord_z }};
+  auto* coord_x = mesh_adapter->node_store.get_x_array();
+  auto* coord_y = mesh_adapter->node_store.get_y_array();
+  auto* coord_z = mesh_adapter->node_store.get_z_array();
+  std::array<coord_type*,3> coords = {{ coord_x, coord_y, coord_z }};
 
   // If a geometric partitioner is selected, compute element centroid
   // coordinates
   const auto alg = g_inputdeck.get< tag::selected, tag::partitioner >();
   if ( tk::ctr::PartitioningAlgorithm().geometric(alg) )
+  {
       // TODO: change params of compute centroids to pass in coords not file
     computeCentroids( coords );
+  }
   else
+  {
     contribute( m_cb.get< tag::part >() );
+  }
 
   std::cout << "Tetinpoel is " << m_tetinpoel.size() << " big " << std::endl;
   std::cout << "Node store size is " << mesh_adapter->node_store.size() << std::endl;
@@ -645,8 +647,7 @@ void Partitioner::contribute_num_elem(uint64_t nelem) {
             m_cb.get< tag::load >() );
 }
 
-void
-Partitioner::computeCentroids( const std::array<coord_type*,3> coords )
+void Partitioner::computeCentroids( const std::array<coord_type*,3> coords )
 // *****************************************************************************
 //  Compute element centroid coordinates
 //! \param[in] er ExodusII mesh reader
@@ -659,7 +660,7 @@ Partitioner::computeCentroids( const std::array<coord_type*,3> coords )
   // Read node coordinates of our chunk of the mesh elements from file
   auto ext = tk::extents( gid );
 
-  // TODO: These should really be pointers, this copy is expensive and wasteful
+  // TODO: These should really be pointers (LHS), this copy is expensive and wasteful
   // I tried making it a pointer initially but was seing a wierd charm C++ SIMD
   // template deduction error -- hopefully J knows more about how to do this
   // TODO-JB: can you look at this please?
@@ -1113,6 +1114,7 @@ Partitioner::reordered()
     for (auto& e : c.second)
        e.second = tk::ref_find( m_linedges, e.first );
 
+  // TODO: This branch should never happen
   if (!m_chedgenodes.empty()) {
 
     // Update chare-categorized element connectivities with new nodes and
@@ -1209,7 +1211,6 @@ Partitioner::reordered()
         }
         s.second = std::move( n );
       }
-
   }
 
   // Update unique global node IDs chares on our PE will contribute to with
@@ -1323,9 +1324,9 @@ Partitioner::createDiscWorkers()
 
     // TODO: We need to categorize all coords by chare id here
     // TODO: is nnode here right?
-    tk::ExodusIIMeshReader
-        er( g_inputdeck.get< tag::cmd, tag::io, tag::input >() );
-    auto nnode = er.readHeader();
+    //tk::ExodusIIMeshReader
+        //er( g_inputdeck.get< tag::cmd, tag::io, tag::input >() );
+    //auto nnode = er.readHeader();
 
     // Categorize by coord
     // Loop over the inpoel categorized by char
@@ -1347,7 +1348,10 @@ Partitioner::createDiscWorkers()
         m_el = tk::global2local( conn );
         std::unordered_map< std::size_t, std::size_t > m_lid = std::get< 2 >( m_el );
 
+        //TODO: I guess this now needs to be udpated? 
         auto l = tk::cref_find(m_chfilenodes,cid);
+
+        std::cout << "Connectivity size " << connectivity.size() << std::endl;
 
         // For each node, add the coordinate data to the store
         for (auto id : connectivity)
@@ -1355,11 +1359,8 @@ Partitioner::createDiscWorkers()
             auto n = l.find(id);
 
             // TODO: this bounds check can presumably be removed
-            if (n != end(l) && n->second < nnode)
-            {
-                std::cout << "id " << id << std::endl;
-                std::cout << "read id " << n->second << std::endl;
-
+            //if (n != end(l) && n->second < nnode)
+            //{
                 // file id
                 // n->first picks up wrong coords but "works" to the end
                 // n->second looks for really big coords, not sure why
@@ -1368,14 +1369,14 @@ Partitioner::createDiscWorkers()
                 size_t store_id = n->second; //n->first;
 
                 // global id => {x,y,z}
-                const auto& coord = mesh_adapter->node_store.get(read_id);
+                const auto& coord = mesh_adapter->node_store.get_coords(read_id);
 
                 // global id
                 // TODO: make this a single call of {1,2,3}
                 m_chcoords[c.first][store_id][0] = coord[0];
                 m_chcoords[c.first][store_id][1] = coord[1];
                 m_chcoords[c.first][store_id][2] = coord[2];
-            }
+            //}
             /*else
             {
                 std::cout << "OUT OF BOUNDS" << std::endl;

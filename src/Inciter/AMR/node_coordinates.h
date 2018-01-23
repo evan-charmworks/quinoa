@@ -15,9 +15,9 @@ namespace AMR {
     {
 
         private:
-            coord_type* m_x;
-            coord_type* m_y;
-            coord_type* m_z;
+            coord_type m_x;
+            coord_type m_y;
+            coord_type m_z;
 
             // We really don't want people to pass this by value..
             // (Because we store refs in here, which are consts..)
@@ -32,14 +32,15 @@ namespace AMR {
             // TODO: Remove this and use x.size()
             size_t m_graphsize;
 
-            void set_x(coord_type* x_in) { m_x = x_in; }
-            void set_y(coord_type* y_in) { m_y = y_in; }
-            void set_z(coord_type* z_in) { m_z = z_in; }
+            // Deep copy
+            void set_x(coord_type& x_in) { m_x = x_in; }
+            void set_y(coord_type& y_in) { m_y = y_in; }
+            void set_z(coord_type& z_in) { m_z = z_in; }
 
             // Getters to grab inside of an entire array
-            coord_type* get_x_array() { return m_x; }
-            coord_type* get_y_array() { return m_y; }
-            coord_type* get_z_array() { return m_z; }
+            coord_type* get_x_array() { return &m_x; }
+            coord_type* get_y_array() { return &m_y; }
+            coord_type* get_z_array() { return &m_z; }
 
             /**
              * @brief Function to enable the tracking of node coordinateds. Must be
@@ -49,12 +50,12 @@ namespace AMR {
              * @param m_y Array of initial y coords
              * @param m_z Array of initial z coords
              * @param graph_size Number of nodes
-             * // TODO: this can be deduced from size of x/y/z?
+             * // TODO: grpah_size can be deduced from size of x/y/z?
              */
-            void init(coord_type* x, coord_type* y, coord_type* z, size_t graph_size)
+            void init(coord_type& x, coord_type& y, coord_type& z, size_t graph_size)
             {
-                Assert( x->size() == y->size(), "Coord arrays have different sizes");
-                Assert( x->size() == z->size(), "Coord arrays have different sizes");
+                Assert( x.size() == y.size(), "Coord arrays have different sizes");
+                Assert( x.size() == z.size(), "Coord arrays have different sizes");
 
                 set_x(x);
                 set_y(y);
@@ -67,38 +68,41 @@ namespace AMR {
              *
              * @param xc Data to add
              */
-            void add_x(real_t xc) { m_x->push_back(xc); }
+            void add_x(real_t xc) { m_x.push_back(xc); }
 
             /**
              * @brief Function to add y coordinate data
              *
              * @param yc Data to add
              */
-            void add_y(real_t yc) { m_y->push_back(yc); }
+            void add_y(real_t yc) { m_y.push_back(yc); }
 
             /**
              * @brief Function to add z coordinate data
              *
              * @param zc data to add
              */
-            void add_z(real_t zc) { m_z->push_back(zc); }
+            void add_z(real_t zc) { m_z.push_back(zc); }
 
             real_t x(size_t id)
             {
-                return (*m_x)[id];
+                Assert( id < size(), "ID out of bounds");
+                return m_x[id];
             }
             real_t y(size_t id)
             {
-                return (*m_y)[id];
+                Assert( id < size(), "ID out of bounds");
+                return m_y[id];
             }
             real_t z(size_t id)
             {
-                return (*m_z)[id];
+                Assert( id < size(), "ID out of bounds");
+                return m_z[id];
             }
 
             size_t size()
             {
-                return m_x->size();
+                return m_x.size();
             }
 
             // TODO: Document this
@@ -272,6 +276,7 @@ namespace AMR {
 
             coordinate_t get(size_t id)
             {
+                Assert( id < size(), "Invalid ID");
                 return id_to_coordinate(id);
             }
 

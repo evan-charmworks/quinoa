@@ -29,9 +29,9 @@ namespace AMR {
             AMR::refinement_t *refiner;
 
             void init_node_coordinates(
-                    coord_type* m_x,
-                    coord_type* m_y,
-                    coord_type* m_z,
+                    coord_type& m_x,
+                    coord_type& m_y,
+                    coord_type& m_z,
                     size_t graph_size
             );
 
