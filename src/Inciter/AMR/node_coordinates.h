@@ -33,9 +33,9 @@ namespace AMR {
             size_t m_graphsize;
 
             // Deep copy
-            void set_x(coord_type& x_in) { m_x = x_in; }
-            void set_y(coord_type& y_in) { m_y = y_in; }
-            void set_z(coord_type& z_in) { m_z = z_in; }
+            void set_x_array(coord_type& x_in) { m_x = x_in; }
+            void set_y_array(coord_type& y_in) { m_y = y_in; }
+            void set_z_array(coord_type& z_in) { m_z = z_in; }
 
             // Getters to grab inside of an entire array
             coord_type* get_x_array() { return &m_x; }
@@ -57,9 +57,9 @@ namespace AMR {
                 Assert( x.size() == y.size(), "Coord arrays have different sizes");
                 Assert( x.size() == z.size(), "Coord arrays have different sizes");
 
-                set_x(x);
-                set_y(y);
-                set_z(z);
+                set_x_array(x);
+                set_y_array(y);
+                set_z_array(z);
                 m_graphsize = graph_size;
             }
 
@@ -99,6 +99,11 @@ namespace AMR {
                 Assert( id < size(), "ID out of bounds");
                 return m_z[id];
             }
+
+            // Alias to above. Should probably settle on a single interface?
+            real_t get_x(size_t id) { return x(id); }
+            real_t get_y(size_t id) { return y(id); }
+            real_t get_z(size_t id) { return z(id); }
 
             size_t size()
             {
@@ -272,6 +277,18 @@ namespace AMR {
                 //   (It's probably OK to remove them....)
                 coordinate_t c = { {x(id), y(id), z(id) } };
                 return c;
+            }
+
+            void set_x(size_t id, real_t val) { m_x[id] = val; }
+            void set_y(size_t id, real_t val) { m_y[id] = val; }
+            void set_z(size_t id, real_t val) { m_z[id] = val; }
+
+            void set(size_t id, real_t x, real_t y, real_t z)
+            {
+                Assert( id < size(), "Invalid ID");
+                set_x(id, x);
+                set_y(id, y);
+                set_z(id, z);
             }
 
             coordinate_t get(size_t id)

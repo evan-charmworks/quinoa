@@ -281,11 +281,25 @@ Partitioner::neworder(const std::unordered_map< std::size_t, std::tuple<std::siz
 {
   // Signal to the runtime system that we have participated in reordering
   participated_complete();
+
   // Store new node IDs associated to old ones
-  for (const auto& p : nd) {
-      // Get id from tuple
-      m_linnodes[ p.first ] = std::get<0>(p.second);
+  for (const auto& p : nd)
+  {
+
+      // Get values from tuple
+      auto id = std::get<0>(p.second);
+      auto x = std::get<1>(p.second);
+      auto y = std::get<2>(p.second);
+      auto z = std::get<3>(p.second);
+
+      m_linnodes[ p.first ] = id;
+
+      // TODO: Will this ID be new? Is this now sparse?!
+      mesh_adapter->node_store.set_x(id, x);
+      mesh_adapter->node_store.set_y(id, y);
+      mesh_adapter->node_store.set_z(id, z);
   }
+
   // If all our nodes have new IDs assigned, signal that to the runtime
   if (m_linnodes.size() == m_nodeset.size()) nodesreorder_complete();
   //TODO: recv the coords here

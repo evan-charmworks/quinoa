@@ -26,6 +26,11 @@ namespace AMR {
             coord_type* get_x_array() { return coordinates.get_x_array(); }
             coord_type* get_y_array() { return coordinates.get_y_array(); }
             coord_type* get_z_array() { return coordinates.get_z_array(); }
+
+            void set_x(size_t id, real_t val) { coordinates.set_x(id, val); }
+            void set_y(size_t id, real_t val) { coordinates.set_y(id, val); }
+            void set_z(size_t id, real_t val) { coordinates.set_z(id, val); }
+
             coordinate_t get_coords(size_t id) {
                 Assert( id < size(), "Invalid ID " + std::to_string(id) +
                         " < " + std::to_string(size()) );
