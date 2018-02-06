@@ -273,7 +273,7 @@ Partitioner::request( int p, const tk::UnsMesh::Edges& ed )
 }
 
 void
-Partitioner::neworder(const std::unordered_map< std::size_t, std::size_t >& nd)
+Partitioner::neworder(const std::unordered_map< std::size_t, std::tuple<std::size_t, tk::real, tk::real, tk::real> >& nd)
 // *****************************************************************************
 //  Receive new (reordered) global node IDs
 //! \param[in] nd Map associating new to old node IDs
@@ -282,9 +282,13 @@ Partitioner::neworder(const std::unordered_map< std::size_t, std::size_t >& nd)
   // Signal to the runtime system that we have participated in reordering
   participated_complete();
   // Store new node IDs associated to old ones
-  for (const auto& p : nd) m_linnodes[ p.first ] = p.second;
+  for (const auto& p : nd) {
+      // Get id from tuple
+      m_linnodes[ p.first ] = std::get<0>(p.second);
+  }
   // If all our nodes have new IDs assigned, signal that to the runtime
   if (m_linnodes.size() == m_nodeset.size()) nodesreorder_complete();
+  //TODO: recv the coords here
 }
 
 void
@@ -906,11 +910,24 @@ Partitioner::prepare()
 
   // Find and return new node IDs to sender
   for (const auto& r : m_reqNodes) {
-    std::unordered_map< std::size_t, std::size_t > n;
-    for (auto p : r.second) n[ p ] = tk::cref_find( m_linnodes, p );
+    std::unordered_map<
+        std::size_t,
+        std::tuple<std::size_t, tk::real, tk::real, tk::real>
+    > n;
+
+    for (auto p : r.second) {
+        // have this pack into a tuple on the RHS
+        auto const& id = tk::cref_find( m_linnodes, p );
+        // TODO: is this id or p?
+        const auto& coord = mesh_adapter->node_store.get_coords(id);
+        auto const& tuple = std::make_tuple(id, coord[0], coord[1], coord[2]);
+        n[ p ] = tuple;
+    }
+
     thisProxy[ r.first ].neworder( n );
     tk::destroy( n );
   }
+  // TODO: Here is where I need to send coords?
 
   tk::destroy( m_reqNodes ); // Clear queue of requests just fulfilled
 
@@ -1108,6 +1125,8 @@ Partitioner::reordered()
       if (n != end(m_linnodes)) nodes[ n->second ] = p;
     }
   }
+
+  // TODO: mesh_adapter needs to be updated to be in global IDs
 
   // Update node IDs of edges, i.e., the map values
   for (auto& c : m_chedgenodes)
@@ -1348,25 +1367,40 @@ Partitioner::createDiscWorkers()
         m_el = tk::global2local( conn );
         std::unordered_map< std::size_t, std::size_t > m_lid = std::get< 2 >( m_el );
 
-        //TODO: I guess this now needs to be udpated? 
+        //TODO: I guess this now needs to be updated?
         auto l = tk::cref_find(m_chfilenodes,cid);
 
         std::cout << "Connectivity size " << connectivity.size() << std::endl;
+
+        // Purely for debugging
+        for (auto id : m_linnodes)
+        {
+            std::cout << CkMyPe() << " m lin nodes " << id.first << " and " << id.second << std::endl;
+        }//
 
         // For each node, add the coordinate data to the store
         for (auto id : connectivity)
         {
             auto n = l.find(id);
 
+                std::cout << CkMyPe() << ":" <<
+                    " id " << id <<
+                    " first " << n->first <<
+                    " second " << n->second <<
+                    std::endl;
+
             // TODO: this bounds check can presumably be removed
             //if (n != end(l) && n->second < nnode)
-            //{
+            if (n->second < mesh_adapter->node_store.size())
+            {
                 // file id
                 // n->first picks up wrong coords but "works" to the end
                 // n->second looks for really big coords, not sure why
                 //int read_id = n->first;
-                size_t read_id = n->second; //n->first;
-                size_t store_id = n->second; //n->first;
+                //size_t read_id = n->second; //n->first;
+                //size_t store_id = n->second; //n->first;
+                size_t read_id = n->second;
+                size_t store_id = id;
 
                 // global id => {x,y,z}
                 const auto& coord = mesh_adapter->node_store.get_coords(read_id);
@@ -1376,11 +1410,15 @@ Partitioner::createDiscWorkers()
                 m_chcoords[c.first][store_id][0] = coord[0];
                 m_chcoords[c.first][store_id][1] = coord[1];
                 m_chcoords[c.first][store_id][2] = coord[2];
-            //}
-            /*else
+            }
+            else
             {
-                std::cout << "OUT OF BOUNDS" << std::endl;
-            }*/
+                std::cout << "OUT OF BOUNDS" <<
+                    //" id " << id <<
+                    //" first " << n->first <<
+                    //" second " << n->second <<
+                    std::endl;
+            }
         }
     }
 

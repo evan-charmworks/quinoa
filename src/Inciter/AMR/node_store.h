@@ -27,7 +27,8 @@ namespace AMR {
             coord_type* get_y_array() { return coordinates.get_y_array(); }
             coord_type* get_z_array() { return coordinates.get_z_array(); }
             coordinate_t get_coords(size_t id) {
-                Assert( id < size(), "Invalid ID");
+                Assert( id < size(), "Invalid ID " + std::to_string(id) +
+                        " < " + std::to_string(size()) );
                 return coordinates.get(id);
             }
 

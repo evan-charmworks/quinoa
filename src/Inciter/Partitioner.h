@@ -132,7 +132,8 @@ class Partitioner : public CBase_Partitioner {
     void request( int p, const tk::UnsMesh::Edges& ed );
 
     //! Receive new (reordered) global node IDs
-    void neworder( const std::unordered_map< std::size_t, std::size_t >& nd );
+    //void neworder( const std::unordered_map< std::size_t, std::size_t >& nd );
+    void neworder(const std::unordered_map< std::size_t, std::tuple<std::size_t, tk::real, tk::real, tk::real> >& nd);
 
     //! Receive new global node IDs associated to edge-nodes
     void neworder( const tk::UnsMesh::EdgeNodes& ed );

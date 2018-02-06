@@ -125,11 +125,12 @@ Discretization::Discretization(
 
       // TODO: this bounds check can presumably be removed
       // TODO: m_filenodes shoiuld be removed
-      auto n = m_filenodes.find(p);
+      //auto n = m_filenodes.find(p);
       //if (n != end(m_filenodes) && n->second < nnode)
       //{
-          auto find_id = n->second;
-          const auto& this_coord = tk::cref_find(coords, find_id);
+          //auto find_id = n->second;
+          //const auto& this_coord = tk::cref_find(coords, find_id);
+          const auto& this_coord = tk::cref_find(coords, p);
 
           auto local_id = tk::cref_find(m_lid,p);
           x[local_id] = this_coord[0];
