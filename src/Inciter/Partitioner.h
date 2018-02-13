@@ -126,14 +126,21 @@ class Partitioner : public CBase_Partitioner {
     void offset( int p, std::size_t u );
 
     //! Request new global node IDs for old node IDs
-    void request( int p, const std::unordered_set< std::size_t >& nd );
+    //void request( int p, const std::unordered_set< std::size_t >& nd );
+    void request( int p, const std::vector< std::array<tk::real, 3> >& nd );
 
     // Request new global node IDs for edges
     void request( int p, const tk::UnsMesh::Edges& ed );
 
     //! Receive new (reordered) global node IDs
     //void neworder( const std::unordered_map< std::size_t, std::size_t >& nd );
-    void neworder(const std::unordered_map< std::size_t, std::tuple<std::size_t, tk::real, tk::real, tk::real> >& nd);
+    //void neworder(const std::unordered_map< std::size_t, std::size_t>& nd);
+    void neworder(
+            const std::unordered_map<
+            std::size_t,
+            std::tuple<std::size_t, tk::real, tk::real, tk::real>
+            >& nd
+    );
 
     //! Receive new global node IDs associated to edge-nodes
     void neworder( const tk::UnsMesh::EdgeNodes& ed );
@@ -194,8 +201,11 @@ class Partitioner : public CBase_Partitioner {
     tk::CProxy_Solver m_solver;
     //! Number of fellow PEs to send elem IDs to
     std::size_t m_npe;
+
     //! Queue of requested node IDs from PEs
-    std::vector< std::pair< int, std::unordered_set<std::size_t> > > m_reqNodes;
+    //std::vector< std::pair< int, std::unordered_set<std::size_t> > > m_reqNodes;
+    std::vector< std::pair< int, std::vector< std::array<tk::real, 3> > >> m_reqNodes;
+
     //! Queue of requested edge-node IDs from PEs
     std::vector< std::pair< int, tk::UnsMesh::Edges > > m_reqEdges;
     //! \brief Starting global mesh node ID for node reordering on this PE
@@ -323,6 +333,7 @@ class Partitioner : public CBase_Partitioner {
 
     // TODO: document this
     tk::UnsMesh::coord_map_t m_chcoords;
+    tk::UnsMesh::coord_map_t::mapped_type m_coords;
 
     // TODO: document this
     AMR::mesh_adapter_t* mesh_adapter;

@@ -36,6 +36,8 @@ class UnsMesh {
       >
     >;
 
+    using coord_vector_t = std::vector< std::array< tk::real, 3> >;
+
     //! Edge: IDs of two end-points
     using Edge = std::array< std::size_t, 2 >;
     //! Hash functor for Edge (node end-point order does not matter)

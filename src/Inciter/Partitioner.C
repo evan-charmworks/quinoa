@@ -244,8 +244,9 @@ Partitioner::offset( int p, std::size_t u )
 }
 
 
+// TODO: this need to recv a tuple
 void
-Partitioner::request( int p, const std::unordered_set< std::size_t >& nd )
+Partitioner::request( int p, const std::vector< std::array<tk::real, 3> >& nd )
 // *****************************************************************************
 //  Request new global node IDs for old node IDs
 //! \param[in] p PE request coming from and to which we send new IDs to
@@ -273,7 +274,12 @@ Partitioner::request( int p, const tk::UnsMesh::Edges& ed )
 }
 
 void
-Partitioner::neworder(const std::unordered_map< std::size_t, std::tuple<std::size_t, tk::real, tk::real, tk::real> >& nd)
+Partitioner::neworder(
+        const std::unordered_map<
+            std::size_t,
+            std::tuple<std::size_t, tk::real, tk::real, tk::real>
+           >& nd
+        )
 // *****************************************************************************
 //  Receive new (reordered) global node IDs
 //! \param[in] nd Map associating new to old node IDs
@@ -844,7 +850,14 @@ Partitioner::reorder()
 
   // Send out request for new global node IDs for nodes we do not reorder
   for (const auto& c : m_ncommunication)
-    thisProxy[ c.first ].request( CkMyPe(), c.second );
+  {
+      std::vector< std::array<tk::real, 3> > coords_in;
+      for (const auto id : c.second)
+      {
+         coords_in.push_back( mesh_adapter->node_store.get_coords(id) );
+      }
+      thisProxy[ c.first ].request( CkMyPe(), coords_in );
+  }
 
   // Send out request for new global node IDs for edges we do not reorder
   for (const auto& e : m_ecommunication)
@@ -922,6 +935,12 @@ Partitioner::prepare()
   // Signal to the runtime system that we have participated in reordering
   participated_complete();
 
+  const tk::real precision = std::numeric_limits<tk::real>::epsilon();
+
+  auto* coord_x = mesh_adapter->node_store.get_x_array();
+  auto* coord_y = mesh_adapter->node_store.get_y_array();
+  auto* coord_z = mesh_adapter->node_store.get_z_array();
+
   // Find and return new node IDs to sender
   for (const auto& r : m_reqNodes) {
     std::unordered_map<
@@ -930,12 +949,38 @@ Partitioner::prepare()
     > n;
 
     for (auto p : r.second) {
-        // have this pack into a tuple on the RHS
-        auto const& id = tk::cref_find( m_linnodes, p );
-        // TODO: is this id or p?
-        const auto& coord = mesh_adapter->node_store.get_coords(id);
-        auto const& tuple = std::make_tuple(id, coord[0], coord[1], coord[2]);
-        n[ p ] = tuple;
+        // TODO: We can replace this linear search with a float hash map
+        // Search for matching coords
+        bool not_found = true;
+        for (int i = 0; i < coord_x->size(); i++)
+        {
+            tk::real x = (*coord_x)[i];
+            tk::real y = (*coord_y)[i];
+            tk::real z = (*coord_z)[i];
+            if (
+                    ( std::abs( x - p[0] ) < precision ) &&
+                    ( std::abs( y - p[1] ) < precision ) &&
+                    ( std::abs( z - p[2] ) < precision )
+            )
+            {
+                // Found matching coord
+                auto id = tk::cref_find( m_linnodes, i );
+                // TODO: is i right?
+                std::cout << "found match " << p[0] << " " << p[1] << " " << p[2] << std::endl;
+                not_found = false;
+                n[ i ] = std::make_tuple( id, p[0], p[1], p[2] );
+            }
+        }
+        // If we didnt find it, we have a problem
+        if (not_found)
+        {
+            Throw("Coord not found"); //+
+                    //std::to_string(" x ") + std::to_string(p[0]) +
+                    //std::to_string(" y ") + std::to_string(p[1]) +
+                    //std::to_string(" z ") + std::to_string(p[2])
+            //);
+        }
+        //n[ r.first ] = matches;
     }
 
     thisProxy[ r.first ].neworder( n );

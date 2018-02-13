@@ -29,14 +29,17 @@ module partitioner {
       entry void recv();
       entry void flatten();
       entry void offset( int pe, std::size_t u );
-      entry void request( int pe, const std::unordered_set< std::size_t >& nd );
+
+      //entry void request( int pe, const std::unordered_set< std::size_t >& nd );
+      entry void request( int pe, const tk::UnsMesh::coord_vector_t& nd );
+
       entry void request( int pe, const tk::UnsMesh::Edges& ed );
 
       entry void neworder(
                    const std::unordered_map< std::size_t,
                    std::tuple<std::size_t, tk::real, tk::real, tk::real> >& nd
       );
-
+ 
       entry void neworder( const tk::UnsMesh::EdgeNodes& ed );
       entry void lower( std::size_t low );
       entry void stdCost( tk::real av );
