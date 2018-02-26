@@ -132,13 +132,19 @@ class Partitioner : public CBase_Partitioner {
     void offset( int p, std::size_t u );
 
     //! Request new global node IDs for old node IDs
-    void request( int p, const std::unordered_set< std::size_t >& nd );
+    void request( int p, const std::vector< std::array<tk::real, 3> >& nd );
 
     // Request new global node IDs for edges
     void request( int p, const tk::UnsMesh::Edges& ed );
 
     //! Receive new (reordered) global node IDs
-    void neworder( const std::unordered_map< std::size_t, std::size_t >& nd );
+    //void neworder( const std::unordered_map< std::size_t, std::size_t >& nd );
+    void neworder(
+            const std::unordered_map<
+            std::size_t,
+            std::tuple<std::size_t, tk::real, tk::real, tk::real>
+            >& nd
+    );
 
     //! Receive new global node IDs associated to edge-nodes
     void neworder( const tk::UnsMesh::EdgeNodes& ed );
@@ -201,8 +207,11 @@ class Partitioner : public CBase_Partitioner {
     Scheme m_scheme;
     //! Number of fellow PEs to send elem IDs to
     std::size_t m_npe;
+
     //! Queue of requested node IDs from PEs
-    std::vector< std::pair< int, std::unordered_set<std::size_t> > > m_reqNodes;
+    //std::vector< std::pair< int, std::unordered_set<std::size_t> > > m_reqNodes;
+    std::vector< std::pair< int, std::vector< std::array<tk::real, 3> > >> m_reqNodes;
+
     //! Queue of requested edge-node IDs from PEs
     std::vector< std::pair< int, tk::UnsMesh::Edges > > m_reqEdges;
     //! \brief Starting global mesh node ID for node reordering on this PE
@@ -391,6 +400,10 @@ class Partitioner : public CBase_Partitioner {
 
     //! Compute communication cost of linear system merging for our PE
     tk::real cost( std::size_t l, std::size_t u );
+
+    std::vector<tk::real> coord_x;
+    std::vector<tk::real> coord_y;
+    std::vector<tk::real> coord_z;
 };
 
 } // inciter::

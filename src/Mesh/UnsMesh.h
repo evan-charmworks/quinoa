@@ -26,6 +26,7 @@ class UnsMesh {
 
   public:
     using Coords = std::array< std::vector< real >, 3 >;
+    using coord_vector_t = std::vector< std::array< tk::real, 3> >;
 
     //! Edge: IDs of two end-points
     using Edge = std::array< std::size_t, 2 >;

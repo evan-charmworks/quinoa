@@ -94,6 +94,23 @@ Partitioner::Partitioner(
   // Read our contiguously-numbered chunk of the mesh graph from file
   readGraph( er );
 
+  /* Read Coords */
+
+  auto nnode = er.readHeader();
+
+  // Set to read entire file (naive)
+  std::array< std::size_t, 2 > ext;
+  ext[0] = 0;
+  ext[1] = nnode-1;
+
+  auto file_coord = er.readNodes( ext );
+
+  coord_x = std::get< 0 >( file_coord );
+  coord_y = std::get< 1 >( file_coord );
+  coord_z = std::get< 2 >( file_coord );
+
+  /* End Read Coords */
+
   // If a geometric partitioner is selected, compute element centroid
   // coordinates
   const auto alg = g_inputdeck.get< tag::selected, tag::partitioner >();
@@ -161,9 +178,8 @@ Partitioner::offset( int p, std::size_t u )
   if (++m_noffset == static_cast<std::size_t>(CkNumPes())) reorder();
 }
 
-
 void
-Partitioner::request( int p, const std::unordered_set< std::size_t >& nd )
+Partitioner::request( int p, const std::vector< std::array<tk::real, 3> >& nd )
 // *****************************************************************************
 //  Request new global node IDs for old node IDs
 //! \param[in] p PE request coming from and to which we send new IDs to
@@ -191,7 +207,12 @@ Partitioner::request( int p, const tk::UnsMesh::Edges& ed )
 }
 
 void
-Partitioner::neworder(const std::unordered_map< std::size_t, std::size_t >& nd)
+Partitioner::neworder(
+        const std::unordered_map<
+            std::size_t,
+            std::tuple<std::size_t, tk::real, tk::real, tk::real>
+           >& nd
+)
 // *****************************************************************************
 //  Receive new (reordered) global node IDs
 //! \param[in] nd Map associating new to old node IDs
@@ -199,8 +220,13 @@ Partitioner::neworder(const std::unordered_map< std::size_t, std::size_t >& nd)
 {
   // Signal to the runtime system that we have participated in reordering
   participated_complete();
+
   // Store new node IDs associated to old ones
-  for (const auto& p : nd) m_linnodes[ p.first ] = p.second;
+  for (const auto& p : nd) {
+      auto id = std::get<0>(p.second);
+      m_linnodes[ p.first ] = id;
+  }
+
   // If all our nodes have new IDs assigned, signal that to the runtime
   if (m_linnodes.size() == m_nodeset.size()) nodesreorder_complete();
 }
@@ -741,8 +767,18 @@ Partitioner::reorder()
   if (CkNumPes() == 1) participated_complete();
 
   // Send out request for new global node IDs for nodes we do not reorder
+  //for (const auto& c : m_ncommunication)
+    //thisProxy[ c.first ].request( CkMyPe(), c.second );
   for (const auto& c : m_ncommunication)
-    thisProxy[ c.first ].request( CkMyPe(), c.second );
+  {
+      std::vector< std::array<tk::real, 3> > coords_in;
+      for (const auto id : c.second)
+      {
+          std::array<tk::real, 3> coord = {{ coord_x[id], coord_y[id], coord_z[id] }};
+          coords_in.push_back( coord );
+      }
+      thisProxy[ c.first ].request( CkMyPe(), coords_in );
+  }
 
   // Send out request for new global node IDs for edges we do not reorder
   for (const auto& e : m_ecommunication)
@@ -820,13 +856,56 @@ Partitioner::prepare()
   // Signal to the runtime system that we have participated in reordering
   participated_complete();
 
+  const tk::real precision = std::numeric_limits<tk::real>::epsilon();
+
+  // Assume coords are read into coord_x etc
+
   // Find and return new node IDs to sender
   for (const auto& r : m_reqNodes) {
-    std::unordered_map< std::size_t, std::size_t > n;
-    for (auto p : r.second) n[ p ] = tk::cref_find( m_linnodes, p );
+    std::unordered_map<
+        std::size_t,
+        std::tuple<std::size_t, tk::real, tk::real, tk::real>
+    > n;
+
+    for (auto p : r.second) {
+        // TODO: We can replace this linear search with a float hash map
+        // Search for matching coords
+        bool not_found = true;
+        for (int i = 0; i < coord_x.size(); i++)
+        {
+            tk::real x = coord_x[i];
+            tk::real y = coord_y[i];
+            tk::real z = coord_z[i];
+            if (
+                    ( std::abs( x - p[0] ) < precision ) &&
+                    ( std::abs( y - p[1] ) < precision ) &&
+                    ( std::abs( z - p[2] ) < precision )
+            )
+            {
+                // Found matching coord
+                auto id = tk::cref_find( m_linnodes, i );
+                // TODO: is i right?
+                //std::cout << "found match " << p[0] << " " << p[1] << " " << p[2] << std::endl;
+                not_found = false;
+                n[ i ] = std::make_tuple( id, p[0], p[1], p[2] );
+            }
+        }
+        // If we didnt find it, we have a problem
+        if (not_found)
+        {
+            Throw("Coord not found"); //+
+                    //std::to_string(" x ") + std::to_string(p[0]) +
+                    //std::to_string(" y ") + std::to_string(p[1]) +
+                    //std::to_string(" z ") + std::to_string(p[2])
+            //);
+        }
+        //n[ r.first ] = matches;
+    }
+
     thisProxy[ r.first ].neworder( n );
     tk::destroy( n );
   }
+  // TODO: Here is where I need to send coords?
 
   tk::destroy( m_reqNodes ); // Clear queue of requests just fulfilled
 
