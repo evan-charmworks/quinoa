@@ -49,6 +49,7 @@ DG::DG( const CProxy_Discretization& disc,
   auto d = Disc();
 
   // Compute face geometry
+  ErrChk( d->Coord().size() > 0, "coord empty!" );
   m_geoFace = tk::genGeoFaceTri(fd.Ntfac(), fd.Inpofa(), d->Coord());
 
   // Compute element geometry

@@ -88,7 +88,7 @@ class DG : public CBase_DG {
 
     //! Access bound Discretization class pointer
     Discretization* Disc() const {
-      Assert( m_disc[ thisIndex ].ckLocal() != nullptr, "ckLocal() null" );
+      ErrChk( m_disc[ thisIndex ].ckLocal() != nullptr, "ckLocal() null" );
       return m_disc[ thisIndex ].ckLocal();
     }
 
