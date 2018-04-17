@@ -72,8 +72,6 @@ MatCG::MatCG( const CProxy_Discretization& disc,
 //! \param[in] solver Linear system solver (Solver) proxy
 // *****************************************************************************
 {
-  TurnManualLBOff();
-
   auto d = Disc();
 
   // Send off global row IDs to linear system solver
