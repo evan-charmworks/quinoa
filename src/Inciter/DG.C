@@ -71,6 +71,8 @@ DG::DG( const CProxy_Discretization& disc,
 //! \param[in] Face data structures
 // *****************************************************************************
 {
+  TurnManualLBOff();
+
   // Perform leak test on mesh partition
   Assert( !leakyPartition(), "Mesh partition leaky" );
 

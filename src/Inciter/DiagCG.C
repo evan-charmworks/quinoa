@@ -77,6 +77,8 @@ DiagCG::DiagCG( const CProxy_Discretization& disc,
 //! \param[in] solver Linear system solver (Solver) proxy
 // *****************************************************************************
 {
+  TurnManualLBOff();
+
   auto d = Disc();
 
   // Allocate communication buffers for LHS, ICs, RHS, mass diffusion RHS
