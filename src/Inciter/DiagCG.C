@@ -94,6 +94,9 @@ DiagCG::DiagCG( const CProxy_Discretization& disc,
 
   // Signal the runtime system that the workers have been created
   solver.ckLocalBranch()->created();
+
+  // Allow automatic load balancing (if enabled) from this point onwards
+  TurnManualLBOff();
 }
 
 void

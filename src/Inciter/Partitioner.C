@@ -1273,10 +1273,10 @@ Partitioner::createDiscWorkers()
 //!   operate on.
 // *****************************************************************************
 {
-  // Disallow automatic load balancing (if enabled) from this point on, till
-  // the end of createWorkers() to avoid the migration of Discretization
-  // base class while the worker 'child' class (diagcg, matcg, dg) is being
-  // created.
+  // Disallow automatic load balancing (if enabled) from this point on, until a
+  // call to TurnManualLBOff() to avoid the migration of Discretization base
+  // class while the worker 'child' class (e.g., diagcg, matcg, dg, ...) is
+  // being created.
   TurnManualLBOn();
 
   auto dist = chareDistribution();
@@ -1378,9 +1378,6 @@ Partitioner::createWorkers()
     // Create worker array element
     m_scheme.insert( cid, m_scheme.get(), m_solver, fd, CkMyPe() );
   }
-
-  // Allow automatic load balancing (if enabled) from this point onwards.
-  TurnManualLBOff();
 
   tk::destroy( m_bface );
   tk::destroy( m_triinpoel );
