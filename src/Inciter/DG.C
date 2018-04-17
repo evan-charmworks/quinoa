@@ -143,9 +143,6 @@ DG::DG( const CProxy_Discretization& disc,
     for (const auto& c : m_msumset) {   // for all chares we share nodes with
       thisProxy[ c.first ].comfac( thisIndex, potbndface );
     }
-
-  // Allow automatic load balancing (if enabled) from this point onwards.
-  TurnManualLBOff();
 }
 
 bool

@@ -1273,12 +1273,6 @@ Partitioner::createDiscWorkers()
 //!   operate on.
 // *****************************************************************************
 {
-  // Disallow automatic load balancing (if enabled) from this point on, until a
-  // call to TurnManualLBOff() to avoid the migration of Discretization base
-  // class while the worker 'child' class (e.g., diagcg, matcg, dg, ...) is
-  // being created.
-  TurnManualLBOn();
-
   auto dist = chareDistribution();
 
   for (int c=0; c<dist[1]; ++c) {
