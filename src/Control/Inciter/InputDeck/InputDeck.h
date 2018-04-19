@@ -34,6 +34,7 @@ class InputDeck :
   public tk::Control< // tag           type
                       tag::title,      kw::title::info::expect::type,
                       tag::selected,   selects,
+                      tag::amr,        amr,
                       tag::discr,      discretization,
                       tag::prec,       precision,
                       tag::flformat,   floatformat,
@@ -113,9 +114,6 @@ class InputDeck :
                                        kw::pde_ce,
                                        kw::pde_kappa,
                                        kw::pde_r0,
-                                       kw::amr,
-                                       kw::amr_initial,
-                                       kw::amr_uniform,
                                        kw::rayleigh_taylor,
                                        kw::taylor_green,
                                        kw::filetype,
@@ -126,10 +124,22 @@ class InputDeck :
                                        kw::linf >;
     using keywords5 = boost::mpl::set< kw::discretization,
                                        kw::fct,
+                                       kw::amr,
+                                       kw::amr_initial,
+                                       kw::amr_uniform,
+                                       kw::amr_initial_conditions,
+                                       kw::amr_uniform_levels,
+                                       kw::amr_error,
+                                       kw::amr_jump,
+                                       kw::amr_hessian,
                                        kw::scheme,
                                        kw::matcg,
                                        kw::diagcg,
-                                       kw::dg >;
+                                       kw::dg,
+                                       kw::bc_sym,
+                                       kw::bc_inlet,
+                                       kw::bc_outlet,
+                                       kw::gauss_hump >;
 
     //! \brief Constructor: set defaults
     //! \param[in] cl Previously parsed and store command line
@@ -151,7 +161,9 @@ class InputDeck :
       // Default field output file type
       set< tag::selected, tag::filetype >( tk::ctr::FieldFileType::EXODUSII );
       // Default AMR settings
-      set< tag::selected, tag::initialamr >( InitialAMRType::NONE );
+      set< tag::amr, tag::amr >( false );
+      set< tag::amr, tag::levels >( 1 );
+      set< tag::amr, tag::error >( AMRErrorType::JUMP );
       // Default discretization scheme
       set< tag::selected, tag::scheme >( SchemeType::MatCG );
       // Default txt floating-point output precision in digits
@@ -176,6 +188,7 @@ class InputDeck :
     void pup( PUP::er& p ) {
       tk::Control< tag::title,      kw::title::info::expect::type,
                    tag::selected,   selects,
+                   tag::amr,        amr,
                    tag::discr,      discretization,
                    tag::prec,       precision,
                    tag::flformat,   floatformat,

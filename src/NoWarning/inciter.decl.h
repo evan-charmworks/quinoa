@@ -39,6 +39,10 @@
   #pragma clang diagnostic ignored "-Wheader-hygiene"
   #pragma clang diagnostic ignored "-Wundefined-func-template"
   #pragma clang diagnostic ignored "-Wcomma"
+  #pragma clang diagnostic ignored "-Woverloaded-virtual"
+  #pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
+  #pragma clang diagnostic ignored "-Wcast-qual"
+  #pragma clang diagnostic ignored "-Wshadow-field"
 #elif defined(STRICT_GNUC)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wunused-parameter"
@@ -55,6 +59,7 @@
   #pragma warning( push )
   #pragma warning( disable: 181 )
   #pragma warning( disable: 1720 )
+  #pragma warning( disable: 1125 )
 #endif
 
 #include "../Main/inciter.decl.h"
